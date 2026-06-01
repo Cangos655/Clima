@@ -1,4 +1,6 @@
 {
   "name": "Clima Room Card",
-  "render_readme": true
+  "render_readme": true,
+  "filename": "clima-room-card.js",
+  "content_in_root": true
 }
