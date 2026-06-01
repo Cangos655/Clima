@@ -2,509 +2,329 @@
  * Clima Room Card — compact room card for Home Assistant Lovelace
  * HACS-compliant, single-file, no build step required.
  *
- * Usage:
- *   type: custom:clima-room-card
- *   room_name: Living Room
- *   climate_entity: climate.living_room
- *   valve_entity: number.living_room_valve
- *   temp_entity: sensor.living_room_temperature
- *   humidity_entity: sensor.living_room_humidity
+ * type: custom:clima-room-card
  */
 
-(function () {
-  // Reuse HA's built-in LitElement / html / css to avoid external imports
-  const LitElement = Object.getPrototypeOf(
-    customElements.get("ha-panel-lovelace")
-  );
-  const { html, css } = LitElement.prototype.constructor;
+class ClimaRoomCard extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._config = {};
+    this._hass = null;
+    this._valveHistory = [];
+    this._historyLoading = false;
+    this._lastHistoryFetch = 0;
+  }
 
-  // ---------------------------------------------------------------------------
-  // Helper: fetch 12-hour history for a single entity and return value array
-  // ---------------------------------------------------------------------------
-  async function fetchHistory(hass, entityId) {
-    const end = new Date();
-    const start = new Date(end.getTime() - 12 * 60 * 60 * 1000);
-    const startIso = start.toISOString();
-    const url =
-      `/api/history/period/${startIso}` +
-      `?filter_entity_id=${entityId}&minimal_response&end_time=${end.toISOString()}`;
-    try {
-      const res = await hass.fetchWithAuth(url);
-      if (!res.ok) return [];
-      const data = await res.json();
-      if (!data || !data[0]) return [];
-      return data[0]
-        .map((s) => parseFloat(s.state))
-        .filter((v) => !isNaN(v));
-    } catch (_) {
-      return [];
+  setConfig(config) {
+    if (!config.climate_entity) {
+      throw new Error("clima-room-card: 'climate_entity' ist erforderlich");
+    }
+    this._config = config;
+    this._render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    this._render();
+    // Reload history every 5 minutes
+    const now = Date.now();
+    if (
+      this._config.valve_entity &&
+      now - this._lastHistoryFetch > 5 * 60 * 1000
+    ) {
+      this._lastHistoryFetch = now;
+      this._loadHistory();
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Helper: build a tiny inline SVG sparkline from an array of numbers
-  // ---------------------------------------------------------------------------
-  function sparkline(values, width = 80, height = 24) {
-    if (!values || values.length < 2)
-      return `<svg width="${width}" height="${height}"></svg>`;
+  getCardSize() {
+    return 2;
+  }
+
+  // ---- History ---------------------------------------------------------------
+
+  async _loadHistory() {
+    if (!this._config.valve_entity || !this._hass) return;
+    this._historyLoading = true;
+    this._renderValveRow();
+
+    const end = new Date();
+    const start = new Date(end.getTime() - 12 * 60 * 60 * 1000);
+    const url =
+      `/api/history/period/${start.toISOString()}` +
+      `?filter_entity_id=${this._config.valve_entity}` +
+      `&minimal_response&end_time=${end.toISOString()}`;
+    try {
+      const res = await this._hass.fetchWithAuth(url);
+      if (res.ok) {
+        const data = await res.json();
+        this._valveHistory = (data && data[0] ? data[0] : [])
+          .map((s) => parseFloat(s.state))
+          .filter((v) => !isNaN(v));
+      }
+    } catch (_) {
+      this._valveHistory = [];
+    }
+    this._historyLoading = false;
+    this._renderValveRow();
+  }
+
+  // ---- Sparkline SVG ---------------------------------------------------------
+
+  _sparkline(values, width = 90, height = 26) {
+    if (!values || values.length < 2) return "";
     const min = Math.min(...values);
     const max = Math.max(...values);
     const range = max - min || 1;
-    const pts = values.map((v, i) => {
-      const x = (i / (values.length - 1)) * width;
-      const y = height - ((v - min) / range) * height;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    const pts = values
+      .map((v, i) => {
+        const x = (i / (values.length - 1)) * width;
+        const y = height - ((v - min) / range) * (height - 2) - 1;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(" ");
+    return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+      <polyline points="${pts}" fill="none" stroke="var(--primary-color,#03a9f4)"
+        stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+    </svg>`;
+  }
+
+  // ---- Actions ---------------------------------------------------------------
+
+  _moreInfo(entityId) {
+    this.dispatchEvent(
+      new CustomEvent("hass-more-info", {
+        bubbles: true,
+        composed: true,
+        detail: { entityId },
+      })
+    );
+  }
+
+  _adjustTemp(delta) {
+    const climate = this._hass && this._hass.states[this._config.climate_entity];
+    if (!climate) return;
+    const current =
+      parseFloat(climate.attributes.temperature) ||
+      parseFloat(climate.attributes.current_temperature) ||
+      20;
+    const step = parseFloat(climate.attributes.target_temp_step) || 0.5;
+    const newTemp = Math.round((current + delta) / step) * step;
+    this._hass.callService("climate", "set_temperature", {
+      entity_id: this._config.climate_entity,
+      temperature: newTemp,
     });
+  }
+
+  // ---- Render ----------------------------------------------------------------
+
+  _styles() {
     return `
-      <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"
-           xmlns="http://www.w3.org/2000/svg" style="display:block">
-        <polyline
-          points="${pts.join(" ")}"
-          fill="none"
-          stroke="var(--primary-color, #03a9f4)"
-          stroke-width="1.5"
-          stroke-linejoin="round"
-          stroke-linecap="round"
-        />
-      </svg>`;
+      :host { display: block; }
+      ha-card { padding: 10px 14px 10px; }
+      .room { font-size:.75rem; font-weight:700; text-transform:uppercase;
+              letter-spacing:.06em; color:var(--secondary-text-color,#888);
+              margin-bottom:6px; }
+      .thermo { display:flex; align-items:center; gap:6px; margin-bottom:5px; }
+      .target { font-size:1.9rem; font-weight:700; cursor:pointer; flex:1;
+                color:var(--primary-text-color); line-height:1; }
+      .target:hover { color:var(--primary-color,#03a9f4); }
+      .btn { background:none; border:1px solid var(--divider-color,#ccc);
+             border-radius:50%; width:26px; height:26px; cursor:pointer;
+             font-size:1rem; color:var(--primary-text-color);
+             display:flex; align-items:center; justify-content:center; padding:0; }
+      .btn:hover { background:var(--primary-color,#03a9f4); color:#fff;
+                   border-color:var(--primary-color,#03a9f4); }
+      .badge { font-size:.62rem; font-weight:700; text-transform:uppercase;
+               padding:2px 6px; border-radius:10px;
+               background:var(--primary-color,#03a9f4); color:#fff; white-space:nowrap; }
+      .badge.off  { background:var(--disabled-text-color,#bbb); }
+      .badge.heat { background:#ff9800; }
+      .badge.cool { background:#2196f3; }
+      .badge.heat_cool,.badge.auto { background:#9c27b0; }
+      .valve { display:flex; align-items:center; gap:8px; margin-bottom:6px; min-height:28px; }
+      .vlabel { font-size:.72rem; color:var(--secondary-text-color,#888); white-space:nowrap; }
+      .vpct   { font-size:.82rem; font-weight:700; min-width:34px; }
+      .spark  { flex:1; display:flex; justify-content:flex-end; align-items:center; }
+      .loading { font-size:.68rem; color:var(--secondary-text-color,#aaa); font-style:italic; }
+      .sensors { display:flex; gap:10px; }
+      .chip { display:flex; align-items:center; gap:4px; cursor:pointer;
+              padding:3px 8px; border-radius:12px;
+              background:var(--secondary-background-color,rgba(0,0,0,.05));
+              font-size:.82rem; font-weight:600; }
+      .chip:hover { background:var(--primary-color,#03a9f4); color:#fff; }
+    `;
   }
 
-  // ---------------------------------------------------------------------------
-  // Main card element
-  // ---------------------------------------------------------------------------
-  class ClimaRoomCard extends LitElement {
-    static get properties() {
-      return {
-        _config: { type: Object },
-        _hass: { type: Object },
-        _valveHistory: { type: Array },
-        _historyLoading: { type: Boolean },
-        _historyStale: { type: Boolean },
-      };
-    }
+  _render() {
+    if (!this._config || !this._hass) return;
+    const cfg = this._config;
+    const hass = this._hass;
 
-    constructor() {
-      super();
-      this._valveHistory = [];
-      this._historyLoading = false;
-      this._historyStale = true;
-      this._lastHistoryFetch = 0;
-    }
+    const climate = hass.states[cfg.climate_entity];
+    const targetTemp = climate && climate.attributes.temperature != null
+      ? parseFloat(climate.attributes.temperature).toFixed(1)
+      : "—";
+    const hvacMode = climate ? climate.state : "off";
+    const hvacLabel = hvacMode.replace(/_/g, " ");
 
-    setConfig(config) {
-      if (!config.climate_entity) {
-        throw new Error("clima-room-card: 'climate_entity' is required");
-      }
-      this._config = config;
-      this._historyStale = true;
-    }
+    const valve = cfg.valve_entity ? hass.states[cfg.valve_entity] : null;
+    const valvePct = valve ? `${parseFloat(valve.state).toFixed(0)}%` : "—";
 
-    set hass(hass) {
-      this._hass = hass;
-      // Refresh history at most once every 5 minutes
-      const now = Date.now();
-      if (
-        this._config &&
-        this._config.valve_entity &&
-        (this._historyStale || now - this._lastHistoryFetch > 5 * 60 * 1000)
-      ) {
-        this._historyStale = false;
-        this._lastHistoryFetch = now;
-        this._loadHistory();
-      }
-    }
+    const tempS = cfg.temp_entity ? hass.states[cfg.temp_entity] : null;
+    const humS  = cfg.humidity_entity ? hass.states[cfg.humidity_entity] : null;
+    const tempVal = tempS ? `${parseFloat(tempS.state).toFixed(1)}°` : null;
+    const humVal  = humS  ? `${parseFloat(humS.state).toFixed(0)}%`  : null;
 
-    async _loadHistory() {
-      if (!this._config.valve_entity) return;
-      this._historyLoading = true;
-      const values = await fetchHistory(this._hass, this._config.valve_entity);
-      this._valveHistory = values;
-      this._historyLoading = false;
-    }
+    const roomName = cfg.room_name || "Zimmer";
 
-    // ---- actions ------------------------------------------------------------
+    const sparkHtml = this._historyLoading
+      ? `<span class="loading">Laden…</span>`
+      : `<span class="svg-wrap">${this._sparkline(this._valveHistory)}</span>`;
 
-    _moreInfo(entityId) {
-      this.dispatchEvent(
-        new CustomEvent("hass-more-info", {
-          bubbles: true,
-          composed: true,
-          detail: { entityId },
-        })
-      );
-    }
+    const valveRow = cfg.valve_entity ? `
+      <div class="valve" id="valve-row">
+        <span class="vlabel">Ventil</span>
+        <span class="vpct">${valvePct}</span>
+        <span class="spark">${sparkHtml}</span>
+      </div>` : "";
 
-    _adjustTemp(delta) {
-      const climate = this._hass.states[this._config.climate_entity];
-      if (!climate) return;
-      const current =
-        parseFloat(climate.attributes.temperature) ||
-        parseFloat(climate.attributes.current_temperature) ||
-        20;
-      const step =
-        parseFloat(climate.attributes.target_temp_step) || 0.5;
-      const newTemp = Math.round((current + delta) / step) * step;
-      this._hass.callService("climate", "set_temperature", {
-        entity_id: this._config.climate_entity,
-        temperature: newTemp,
-      });
-    }
+    const sensorRow = (tempVal || humVal) ? `
+      <div class="sensors">
+        ${tempVal ? `<div class="chip" id="chip-temp">🌡 ${tempVal}</div>` : ""}
+        ${humVal  ? `<div class="chip" id="chip-hum">💧 ${humVal}</div>`   : ""}
+      </div>` : "";
 
-    // ---- render -------------------------------------------------------------
-
-    static get styles() {
-      return css`
-        :host {
-          display: block;
-        }
-        ha-card {
-          padding: 12px 14px 10px;
-          box-sizing: border-box;
-          max-width: 320px;
-        }
-        .room-name {
-          font-size: 0.78rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          color: var(--secondary-text-color, #888);
-          margin-bottom: 6px;
-        }
-        /* --- thermostat row --- */
-        .thermo-row {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          margin-bottom: 6px;
-        }
-        .temp-target {
-          font-size: 2rem;
-          font-weight: 700;
-          color: var(--primary-text-color);
-          cursor: pointer;
-          line-height: 1;
-          flex: 1;
-        }
-        .temp-target:hover {
-          color: var(--primary-color, #03a9f4);
-        }
-        .adj-btn {
-          background: none;
-          border: 1px solid var(--divider-color, #ccc);
-          border-radius: 50%;
-          width: 28px;
-          height: 28px;
-          cursor: pointer;
-          font-size: 1.1rem;
-          line-height: 1;
-          color: var(--primary-text-color);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 0;
-          transition: background 0.15s;
-        }
-        .adj-btn:hover {
-          background: var(--primary-color, #03a9f4);
-          color: #fff;
-          border-color: var(--primary-color, #03a9f4);
-        }
-        .hvac-badge {
-          font-size: 0.65rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-          padding: 2px 6px;
-          border-radius: 10px;
-          background: var(--primary-color, #03a9f4);
-          color: #fff;
-          white-space: nowrap;
-        }
-        .hvac-badge.off {
-          background: var(--disabled-text-color, #bbb);
-        }
-        .hvac-badge.cool {
-          background: #2196f3;
-        }
-        .hvac-badge.heat {
-          background: #ff9800;
-        }
-        .hvac-badge.heat_cool,
-        .hvac-badge.auto {
-          background: #9c27b0;
-        }
-        .hvac-badge.fan_only {
-          background: #009688;
-        }
-        .hvac-badge.dry {
-          background: #795548;
-        }
-        /* --- valve row --- */
-        .valve-row {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 6px;
-          min-height: 28px;
-        }
-        .valve-label {
-          font-size: 0.75rem;
-          color: var(--secondary-text-color, #888);
-          white-space: nowrap;
-        }
-        .valve-pct {
-          font-size: 0.85rem;
-          font-weight: 600;
-          color: var(--primary-text-color);
-          min-width: 36px;
-        }
-        .sparkline-wrap {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-        }
-        .loading-text {
-          font-size: 0.7rem;
-          color: var(--secondary-text-color, #aaa);
-          font-style: italic;
-        }
-        /* --- sensor row --- */
-        .sensor-row {
-          display: flex;
-          gap: 12px;
-        }
-        .sensor-chip {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          cursor: pointer;
-          padding: 3px 7px;
-          border-radius: 12px;
-          background: var(--secondary-background-color, rgba(0,0,0,0.04));
-          transition: background 0.15s;
-        }
-        .sensor-chip:hover {
-          background: var(--primary-color, #03a9f4);
-          color: #fff;
-        }
-        .sensor-icon {
-          font-size: 0.85rem;
-        }
-        .sensor-value {
-          font-size: 0.85rem;
-          font-weight: 600;
-        }
-      `;
-    }
-
-    render() {
-      if (!this._config || !this._hass) return html``;
-
-      const cfg = this._config;
-      const hass = this._hass;
-
-      // Climate entity
-      const climate = hass.states[cfg.climate_entity];
-      const targetTemp = climate
-        ? climate.attributes.temperature != null
-          ? parseFloat(climate.attributes.temperature).toFixed(1)
-          : "—"
-        : "—";
-      const hvacMode = climate ? climate.state : "off";
-      const hvacLabel = hvacMode.replace(/_/g, " ");
-
-      // Valve entity
-      const valve = cfg.valve_entity ? hass.states[cfg.valve_entity] : null;
-      const valvePct = valve ? `${parseFloat(valve.state).toFixed(0)}%` : "—";
-
-      // Sensor entities
-      const tempSensor = cfg.temp_entity ? hass.states[cfg.temp_entity] : null;
-      const humSensor = cfg.humidity_entity
-        ? hass.states[cfg.humidity_entity]
-        : null;
-      const tempVal = tempSensor
-        ? `${parseFloat(tempSensor.state).toFixed(1)}°`
-        : "—";
-      const humVal = humSensor
-        ? `${parseFloat(humSensor.state).toFixed(0)}%`
-        : "—";
-
-      const roomName = cfg.room_name || "Room";
-
-      const sparkSvg = this._historyLoading
-        ? ""
-        : sparkline(this._valveHistory);
-
-      return html`
-        <ha-card>
-          <div class="room-name">${roomName}</div>
-
-          <!-- Thermostat row -->
-          <div class="thermo-row">
-            <span
-              class="temp-target"
-              @click=${() => this._moreInfo(cfg.climate_entity)}
-              title="Open more info"
-            >${targetTemp}°</span>
-            <button class="adj-btn" @click=${() => this._adjustTemp(-0.5)} title="Decrease">−</button>
-            <button class="adj-btn" @click=${() => this._adjustTemp(0.5)} title="Increase">+</button>
-            <span class="hvac-badge ${hvacMode}">${hvacLabel}</span>
-          </div>
-
-          <!-- Valve row -->
-          ${cfg.valve_entity
-            ? html`
-              <div class="valve-row">
-                <span class="valve-label">Ventiel</span>
-                <span class="valve-pct">${valvePct}</span>
-                <div class="sparkline-wrap">
-                  ${this._historyLoading
-                    ? html`<span class="loading-text">Laden…</span>`
-                    : html`<span .innerHTML=${sparkSvg}></span>`}
-                </div>
-              </div>`
-            : ""}
-
-          <!-- Sensor row -->
-          <div class="sensor-row">
-            ${tempSensor
-              ? html`
-                <div
-                  class="sensor-chip"
-                  @click=${() => this._moreInfo(cfg.temp_entity)}
-                  title="${cfg.temp_entity}"
-                >
-                  <span class="sensor-icon">🌡</span>
-                  <span class="sensor-value">${tempVal}</span>
-                </div>`
-              : ""}
-            ${humSensor
-              ? html`
-                <div
-                  class="sensor-chip"
-                  @click=${() => this._moreInfo(cfg.humidity_entity)}
-                  title="${cfg.humidity_entity}"
-                >
-                  <span class="sensor-icon">💧</span>
-                  <span class="sensor-value">${humVal}</span>
-                </div>`
-              : ""}
-          </div>
-        </ha-card>
-      `;
-    }
-
-    // ---- card config --------------------------------------------------------
-
-    static getConfigElement() {
-      return document.createElement("clima-room-card-editor");
-    }
-
-    static getStubConfig() {
-      return {
-        room_name: "Living Room",
-        climate_entity: "climate.living_room",
-        valve_entity: "number.living_room_valve",
-        temp_entity: "sensor.living_room_temperature",
-        humidity_entity: "sensor.living_room_humidity",
-      };
-    }
-  }
-
-  customElements.define("clima-room-card", ClimaRoomCard);
-
-  // ---------------------------------------------------------------------------
-  // Visual config editor
-  // ---------------------------------------------------------------------------
-  class ClimaRoomCardEditor extends LitElement {
-    static get properties() {
-      return {
-        _config: { type: Object },
-        hass: { type: Object },
-      };
-    }
-
-    setConfig(config) {
-      this._config = { ...config };
-    }
-
-    _valueChanged(field, e) {
-      const val = e.target.value;
-      this._config = { ...this._config, [field]: val };
-      this.dispatchEvent(
-        new CustomEvent("config-changed", {
-          bubbles: true,
-          composed: true,
-          detail: { config: this._config },
-        })
-      );
-    }
-
-    static get styles() {
-      return css`
-        .editor-row {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-          padding: 8px 0;
-        }
-        label {
-          display: flex;
-          flex-direction: column;
-          font-size: 0.85rem;
-          color: var(--secondary-text-color);
-          gap: 3px;
-        }
-        input {
-          padding: 6px 8px;
-          border: 1px solid var(--divider-color, #ccc);
-          border-radius: 4px;
-          background: var(--card-background-color, #fff);
-          color: var(--primary-text-color);
-          font-size: 0.9rem;
-        }
-        input:focus {
-          outline: none;
-          border-color: var(--primary-color, #03a9f4);
-        }
-      `;
-    }
-
-    render() {
-      if (!this._config) return html``;
-      const c = this._config;
-      const field = (label, key, placeholder) => html`
-        <label>
-          ${label}
-          <input
-            .value=${c[key] || ""}
-            placeholder=${placeholder}
-            @change=${(e) => this._valueChanged(key, e)}
-          />
-        </label>`;
-
-      return html`
-        <div class="editor-row">
-          ${field("Room Name", "room_name", "e.g. Living Room")}
-          ${field("Climate Entity", "climate_entity", "climate.living_room")}
-          ${field("Valve Entity (optional)", "valve_entity", "number.living_room_valve")}
-          ${field("Temperature Sensor (optional)", "temp_entity", "sensor.living_room_temperature")}
-          ${field("Humidity Sensor (optional)", "humidity_entity", "sensor.living_room_humidity")}
+    this.shadowRoot.innerHTML = `
+      <style>${this._styles()}</style>
+      <ha-card>
+        <div class="room">${roomName}</div>
+        <div class="thermo">
+          <span class="target" id="target">${targetTemp}°</span>
+          <button class="btn" id="btn-minus">−</button>
+          <button class="btn" id="btn-plus">+</button>
+          <span class="badge ${hvacMode}">${hvacLabel}</span>
         </div>
-      `;
-    }
+        ${valveRow}
+        ${sensorRow}
+      </ha-card>`;
+
+    // Attach events after render
+    this.shadowRoot.getElementById("target")
+      ?.addEventListener("click", () => this._moreInfo(cfg.climate_entity));
+    this.shadowRoot.getElementById("btn-minus")
+      ?.addEventListener("click", () => this._adjustTemp(-0.5));
+    this.shadowRoot.getElementById("btn-plus")
+      ?.addEventListener("click", () => this._adjustTemp(0.5));
+    this.shadowRoot.getElementById("chip-temp")
+      ?.addEventListener("click", () => this._moreInfo(cfg.temp_entity));
+    this.shadowRoot.getElementById("chip-hum")
+      ?.addEventListener("click", () => this._moreInfo(cfg.humidity_entity));
   }
 
-  customElements.define("clima-room-card-editor", ClimaRoomCardEditor);
+  _renderValveRow() {
+    const row = this.shadowRoot.querySelector(".valve");
+    if (!row) return;
+    const cfg = this._config;
+    const hass = this._hass;
+    const valve = cfg.valve_entity ? hass.states[cfg.valve_entity] : null;
+    const valvePct = valve ? `${parseFloat(valve.state).toFixed(0)}%` : "—";
+    const sparkHtml = this._historyLoading
+      ? `<span class="loading">Laden…</span>`
+      : `<span class="svg-wrap">${this._sparkline(this._valveHistory)}</span>`;
+    row.innerHTML = `
+      <span class="vlabel">Ventil</span>
+      <span class="vpct">${valvePct}</span>
+      <span class="spark">${sparkHtml}</span>`;
+  }
 
-  // Register card info with Lovelace
-  window.customCards = window.customCards || [];
-  window.customCards.push({
-    type: "clima-room-card",
-    name: "Clima Room Card",
-    description:
-      "Compact room card showing climate target temp, valve sparkline, temperature and humidity.",
-    preview: false,
-  });
-})();
+  // ---- Visual editor ---------------------------------------------------------
+
+  static getConfigElement() {
+    return document.createElement("clima-room-card-editor");
+  }
+
+  static getStubConfig() {
+    return {
+      room_name: "Zimmer",
+      climate_entity: "climate.beispiel",
+      valve_entity: "",
+      temp_entity: "",
+      humidity_entity: "",
+    };
+  }
+}
+
+customElements.define("clima-room-card", ClimaRoomCard);
+
+// ---------------------------------------------------------------------------
+// Visual config editor
+// ---------------------------------------------------------------------------
+class ClimaRoomCardEditor extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._config = {};
+  }
+
+  setConfig(config) {
+    this._config = { ...config };
+    this._render();
+  }
+
+  set hass(_) {}
+
+  _render() {
+    const c = this._config;
+    const field = (label, key, placeholder, required = false) =>
+      `<label>${label}${required ? " *" : ""}
+        <input data-key="${key}" value="${c[key] || ""}" placeholder="${placeholder}">
+      </label>`;
+
+    this.shadowRoot.innerHTML = `
+      <style>
+        .form { display:flex; flex-direction:column; gap:10px; padding:8px 0; }
+        label { display:flex; flex-direction:column; font-size:.85rem;
+                color:var(--secondary-text-color,#888); gap:3px; }
+        input { padding:6px 8px; border:1px solid var(--divider-color,#ccc);
+                border-radius:4px; background:var(--card-background-color,#fff);
+                color:var(--primary-text-color); font-size:.9rem; }
+        input:focus { outline:none; border-color:var(--primary-color,#03a9f4); }
+        small { font-size:.72rem; color:var(--secondary-text-color,#aaa); }
+      </style>
+      <div class="form">
+        ${field("Zimmer-Name", "room_name", "z.B. Wohnzimmer")}
+        ${field("Thermostat Entity", "climate_entity", "climate.wohnzimmer", true)}
+        ${field("Ventil Entity (optional)", "valve_entity", "sensor.wohnzimmer_ventil")}
+        ${field("Temperatur Sensor (optional)", "temp_entity", "sensor.wohnzimmer_temperatur")}
+        ${field("Luftfeuchte Sensor (optional)", "humidity_entity", "sensor.wohnzimmer_luftfeuchte")}
+        <small>* Pflichtfeld</small>
+      </div>`;
+
+    this.shadowRoot.querySelectorAll("input").forEach((input) => {
+      input.addEventListener("change", (e) => {
+        const key = e.target.dataset.key;
+        this._config = { ...this._config, [key]: e.target.value };
+        this.dispatchEvent(
+          new CustomEvent("config-changed", {
+            bubbles: true,
+            composed: true,
+            detail: { config: this._config },
+          })
+        );
+      });
+    });
+  }
+}
+
+customElements.define("clima-room-card-editor", ClimaRoomCardEditor);
+
+// Register card in HA card picker
+window.customCards = window.customCards || [];
+window.customCards.push({
+  type: "clima-room-card",
+  name: "Clima Room Card",
+  description: "Kompakte Zimmerkarte: Thermostat, Ventilstellung, Temperatur & Luftfeuchte.",
+  preview: false,
+});
