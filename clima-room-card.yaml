@@ -1,0 +1,47 @@
+# ═══════════════════════════════════════════════
+# Clima Room Card – native Lovelace, kein HACS
+# ───────────────────────────────────────────────
+# Kopiere diesen Block für jedes Zimmer.
+# Ersetze die vier Entity-IDs und den room_name.
+# ═══════════════════════════════════════════════
+
+type: vertical-stack
+cards:
+
+  # ── THERMOSTAT ────────────────────────────────
+  - type: thermostat
+    entity: climate.DEIN_THERMOSTAT        # ← anpassen
+    # Zeigt Soll-Temp mit Auf/Ab-Regler; Klick → Detailansicht
+
+  # ── VENTILSTELLUNG (aktuell + 12h-Verlauf) ───
+  - type: horizontal-stack
+    cards:
+
+      - type: entity
+        entity: sensor.DEIN_VENTIL         # ← anpassen
+        name: Ventilstellung
+        icon: mdi:valve
+        tap_action:
+          action: none
+
+      - type: history-graph
+        entities:
+          - entity: sensor.DEIN_VENTIL     # ← anpassen
+            name: Ventilstellung 12h
+        hours_to_show: 12
+        refresh_interval: 300
+
+  # ── THERMOMETER ───────────────────────────────
+  - type: glance
+    entities:
+      - entity: sensor.DEIN_THERMOMETER_TEMP   # ← anpassen
+        name: Temperatur
+        tap_action:
+          action: more-info
+      - entity: sensor.DEIN_THERMOMETER_HUM    # ← anpassen
+        name: Luftfeuchte
+        tap_action:
+          action: more-info
+    show_name: true
+    show_icon: true
+    show_state: true
