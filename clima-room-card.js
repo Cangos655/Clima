@@ -5,7 +5,7 @@
  * type: custom:clima-room-card
  */
 
-const CLIMA_CARD_VERSION = "1.0.4";
+const CLIMA_CARD_VERSION = "1.0.5";
 console.info(`%c CLIMA-ROOM-CARD %c v${CLIMA_CARD_VERSION} `, "background:#03a9f4;color:#fff;font-weight:700", "background:#ccc;color:#000");
 
 class ClimaRoomCard extends HTMLElement {
@@ -18,6 +18,16 @@ class ClimaRoomCard extends HTMLElement {
     this._historyLoading = false;
     this._lastHistoryFetch = 0;
     this._built = false;
+
+    // Event delegation on shadow root — survives any innerHTML changes
+    this.shadowRoot.addEventListener("click", (e) => {
+      const id = e.target.id || e.target.closest("[id]")?.id;
+      if (id === "btn-minus")  this._adjustTemp(-0.5);
+      if (id === "btn-plus")   this._adjustTemp(0.5);
+      if (id === "target")     this._moreInfo(this._config.climate_entity);
+      if (id === "chip-temp")  this._moreInfo(this._config.temp_entity);
+      if (id === "chip-hum")   this._moreInfo(this._config.humidity_entity);
+    });
   }
 
   setConfig(config) {
@@ -107,18 +117,6 @@ class ClimaRoomCard extends HTMLElement {
           ${cfg.humidity_entity ? `<div class="chip" id="chip-hum">💧 —</div>`  : ""}
         </div>
       </ha-card>`;
-
-    // Attach events once
-    this.shadowRoot.getElementById("btn-minus")
-      .addEventListener("click", () => this._adjustTemp(-0.5));
-    this.shadowRoot.getElementById("btn-plus")
-      .addEventListener("click", () => this._adjustTemp(0.5));
-    this.shadowRoot.getElementById("target")
-      .addEventListener("click", () => this._moreInfo(cfg.climate_entity));
-    this.shadowRoot.getElementById("chip-temp")
-      ?.addEventListener("click", () => this._moreInfo(cfg.temp_entity));
-    this.shadowRoot.getElementById("chip-hum")
-      ?.addEventListener("click", () => this._moreInfo(cfg.humidity_entity));
 
     this._built = true;
   }
