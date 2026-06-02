@@ -5,7 +5,7 @@
  * type: custom:clima-room-card
  */
 
-const CLIMA_CARD_VERSION = "1.0.6";
+const CLIMA_CARD_VERSION = "1.0.7";
 console.info(`%c CLIMA-ROOM-CARD %c v${CLIMA_CARD_VERSION} `, "background:#03a9f4;color:#fff;font-weight:700", "background:#ccc;color:#000");
 
 class ClimaRoomCard extends HTMLElement {
@@ -59,51 +59,61 @@ if (id === "target")     this._moreInfo(this._config.climate_entity);
     this.shadowRoot.innerHTML = `
       <style>
         :host { display:block; }
-        ha-card { padding:10px 14px; }
-        .room { font-size:.75rem; font-weight:700; text-transform:uppercase;
-                letter-spacing:.06em; color:var(--secondary-text-color,#888);
-                margin-bottom:6px; }
-        .ver  { font-size:.6rem; font-weight:400; opacity:.5; }
-        .thermo { display:flex; align-items:center; gap:6px; margin-bottom:5px; }
-        .target { font-size:1.9rem; font-weight:700; cursor:pointer; flex:1;
+        ha-card { padding:0; overflow:hidden; border-radius:12px; }
+        /* Header */
+        .header {
+          background: linear-gradient(135deg, #1e88e5, #1565c0);
+          padding: 8px 12px;
+          display:flex; justify-content:space-between; align-items:center;
+        }
+        .room { font-size:.7rem; font-weight:700; text-transform:uppercase;
+                letter-spacing:.08em; color:rgba(255,255,255,.85); }
+        .ver  { font-size:.58rem; font-weight:400; opacity:.6; margin-left:4px; }
+        .badge { font-size:.6rem; font-weight:700; text-transform:uppercase;
+                 padding:2px 7px; border-radius:6px;
+                 background:rgba(255,255,255,.2); color:#fff; white-space:nowrap; }
+        .badge.heat      { background:rgba(255,152,0,.35); color:#ffe0b2; }
+        .badge.cool      { background:rgba(33,150,243,.35); color:#bbdefb; }
+        .badge.heat_cool,.badge.auto { background:rgba(156,39,176,.35); color:#e1bee7; }
+        /* Body */
+        .body { padding:10px 12px; }
+        /* Temp + Valve row */
+        .main-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+        .target { font-size:2rem; font-weight:700; cursor:pointer; flex:1;
                   color:var(--primary-text-color); line-height:1; }
-        .target:hover { color:var(--primary-color,#03a9f4); }
-.badge { font-size:.62rem; font-weight:700; text-transform:uppercase;
-                 padding:2px 6px; border-radius:10px;
-                 background:var(--primary-color,#03a9f4); color:#fff; white-space:nowrap; }
-        .badge.off       { background:var(--disabled-text-color,#bbb); }
-        .badge.heat      { background:#ff9800; }
-        .badge.cool      { background:#2196f3; }
-        .badge.heat_cool,.badge.auto { background:#9c27b0; }
-        .valve  { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
-        .vlabel { font-size:.72rem; color:var(--secondary-text-color,#888); }
-        .vpct   { font-size:.82rem; font-weight:700; min-width:34px; }
-        .vavg   { font-size:.72rem; color:var(--secondary-text-color,#888); }
-        .sensors { display:flex; gap:10px; }
-        .chip { display:flex; align-items:center; gap:4px; cursor:pointer;
-                padding:3px 8px; border-radius:12px;
-                background:var(--secondary-background-color,rgba(0,0,0,.05));
+        .target:hover { opacity:.75; }
+        .valve-block { display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
+        .vlabel { font-size:.65rem; color:var(--secondary-text-color,#888);
+                  text-transform:uppercase; letter-spacing:.04em; }
+        .vpct   { font-size:1rem; font-weight:700; color:var(--primary-text-color); line-height:1; }
+        .vavg   { font-size:.68rem; color:var(--secondary-text-color,#aaa); }
+        /* Sensors */
+        .sensors { display:flex; gap:8px; }
+        .chip { flex:1; display:flex; align-items:center; justify-content:center; gap:5px;
+                cursor:pointer; padding:5px 8px; border-radius:8px;
+                background:var(--secondary-background-color,rgba(0,0,0,.04));
                 font-size:.82rem; font-weight:600; }
         .chip:active { background:var(--primary-color,#03a9f4); color:#fff; }
       </style>
       <ha-card>
-        <div class="room">
-          <span id="room-name"></span>
-          <span class="ver">v${CLIMA_CARD_VERSION}</span>
-        </div>
-        <div class="thermo">
-          <span class="target" id="target">—°</span>
+        <div class="header">
+          <span class="room"><span id="room-name"></span><span class="ver">v${CLIMA_CARD_VERSION}</span></span>
           <span class="badge off" id="badge">off</span>
         </div>
-        ${cfg.valve_entity ? `
-        <div class="valve">
-          <span class="vlabel">Ventil</span>
-          <span class="vpct" id="valve-pct">—</span>
-          <span class="vavg" id="valve-avg"></span>
-        </div>` : ""}
-        <div class="sensors">
-          ${cfg.temp_entity     ? `<div class="chip" id="chip-temp">🌡 —</div>` : ""}
-          ${cfg.humidity_entity ? `<div class="chip" id="chip-hum">💧 —</div>`  : ""}
+        <div class="body">
+          <div class="main-row">
+            <span class="target" id="target">—°</span>
+            ${cfg.valve_entity ? `
+            <div class="valve-block">
+              <span class="vlabel">Ventil</span>
+              <span class="vpct" id="valve-pct">—</span>
+              <span class="vavg" id="valve-avg"></span>
+            </div>` : ""}
+          </div>
+          <div class="sensors">
+            ${cfg.temp_entity     ? `<div class="chip" id="chip-temp">🌡 —</div>` : ""}
+            ${cfg.humidity_entity ? `<div class="chip" id="chip-hum">💧 —</div>`  : ""}
+          </div>
         </div>
       </ha-card>`;
 
