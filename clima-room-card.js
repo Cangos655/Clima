@@ -5,7 +5,7 @@
  * type: custom:clima-room-card
  */
 
-const CLIMA_CARD_VERSION = "1.0.7";
+const CLIMA_CARD_VERSION = "1.0.8";
 console.info(`%c CLIMA-ROOM-CARD %c v${CLIMA_CARD_VERSION} `, "background:#03a9f4;color:#fff;font-weight:700", "background:#ccc;color:#000");
 
 class ClimaRoomCard extends HTMLElement {
@@ -77,16 +77,21 @@ if (id === "target")     this._moreInfo(this._config.climate_entity);
         .badge.heat_cool,.badge.auto { background:rgba(156,39,176,.35); color:#e1bee7; }
         /* Body */
         .body { padding:10px 12px; }
-        /* Temp + Valve row */
-        .main-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-        .target { font-size:2rem; font-weight:700; cursor:pointer; flex:1;
+        /* Temp + Valve 50/50 */
+        .main-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
+        .temp-cell { display:flex; flex-direction:column; justify-content:center; }
+        .temp-label { font-size:.62rem; color:var(--secondary-text-color,#aaa);
+                      text-transform:uppercase; letter-spacing:.04em; margin-bottom:2px; }
+        .target { font-size:2rem; font-weight:700; cursor:pointer;
                   color:var(--primary-text-color); line-height:1; }
         .target:hover { opacity:.75; }
-        .valve-block { display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
-        .vlabel { font-size:.65rem; color:var(--secondary-text-color,#888);
-                  text-transform:uppercase; letter-spacing:.04em; }
-        .vpct   { font-size:1rem; font-weight:700; color:var(--primary-text-color); line-height:1; }
-        .vavg   { font-size:.68rem; color:var(--secondary-text-color,#aaa); }
+        .valve-cell { display:flex; flex-direction:column; justify-content:center;
+                      align-items:flex-end;
+                      background:rgba(30,136,229,.08); border-radius:8px; padding:6px 10px; }
+        .vlabel { font-size:.62rem; color:#1565c0; text-transform:uppercase;
+                  letter-spacing:.04em; margin-bottom:2px; }
+        .vpct   { font-size:1.4rem; font-weight:700; color:#1565c0; line-height:1; }
+        .vavg   { font-size:.68rem; color:#90caf9; margin-top:2px; }
         /* Sensors */
         .sensors { display:flex; gap:8px; }
         .chip { flex:1; display:flex; align-items:center; justify-content:center; gap:5px;
@@ -102,9 +107,12 @@ if (id === "target")     this._moreInfo(this._config.climate_entity);
         </div>
         <div class="body">
           <div class="main-row">
-            <span class="target" id="target">—°</span>
+            <div class="temp-cell">
+              <span class="temp-label">Soll-Temp</span>
+              <span class="target" id="target">—°</span>
+            </div>
             ${cfg.valve_entity ? `
-            <div class="valve-block">
+            <div class="valve-cell">
               <span class="vlabel">Ventil</span>
               <span class="vpct" id="valve-pct">—</span>
               <span class="vavg" id="valve-avg"></span>
