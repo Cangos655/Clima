@@ -5,7 +5,7 @@
  * type: custom:clima-room-card
  */
 
-const CLIMA_CARD_VERSION = "1.0.2";
+const CLIMA_CARD_VERSION = "1.0.3";
 console.info(`%c CLIMA-ROOM-CARD %c v${CLIMA_CARD_VERSION} `, "background:#03a9f4;color:#fff;font-weight:700", "background:#ccc;color:#000");
 
 class ClimaRoomCard extends HTMLElement {
@@ -14,7 +14,7 @@ class ClimaRoomCard extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this._config = {};
     this._hass = null;
-    this._valveHistory = [];
+    this._valveAvg = null;
     this._historyLoading = false;
     this._lastHistoryFetch = 0;
   }
@@ -53,7 +53,7 @@ class ClimaRoomCard extends HTMLElement {
     this._renderValveRow();
 
     const end = new Date();
-    const start = new Date(end.getTime() - 12 * 60 * 60 * 1000);
+    const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
     const url =
       `/api/history/period/${start.toISOString()}` +
       `?filter_entity_id=${this._config.valve_entity}` +
@@ -62,35 +62,18 @@ class ClimaRoomCard extends HTMLElement {
       const res = await this._hass.fetchWithAuth(url);
       if (res.ok) {
         const data = await res.json();
-        this._valveHistory = (data && data[0] ? data[0] : [])
+        const values = (data && data[0] ? data[0] : [])
           .map((s) => parseFloat(s.state))
           .filter((v) => !isNaN(v));
+        this._valveAvg = values.length
+          ? values.reduce((a, b) => a + b, 0) / values.length
+          : null;
       }
     } catch (_) {
-      this._valveHistory = [];
+      this._valveAvg = null;
     }
     this._historyLoading = false;
     this._renderValveRow();
-  }
-
-  // ---- Sparkline SVG ---------------------------------------------------------
-
-  _sparkline(values, width = 90, height = 26) {
-    if (!values || values.length < 2) return "";
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const range = max - min || 1;
-    const pts = values
-      .map((v, i) => {
-        const x = (i / (values.length - 1)) * width;
-        const y = height - ((v - min) / range) * (height - 2) - 1;
-        return `${x.toFixed(1)},${y.toFixed(1)}`;
-      })
-      .join(" ");
-    return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
-      <polyline points="${pts}" fill="none" stroke="var(--primary-color,#03a9f4)"
-        stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
-    </svg>`;
   }
 
   // ---- Actions ---------------------------------------------------------------
@@ -146,10 +129,10 @@ class ClimaRoomCard extends HTMLElement {
       .badge.heat { background:#ff9800; }
       .badge.cool { background:#2196f3; }
       .badge.heat_cool,.badge.auto { background:#9c27b0; }
-      .valve { display:flex; align-items:center; gap:8px; margin-bottom:6px; min-height:28px; }
+      .valve { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
       .vlabel { font-size:.72rem; color:var(--secondary-text-color,#888); white-space:nowrap; }
       .vpct   { font-size:.82rem; font-weight:700; min-width:34px; }
-      .spark  { flex:1; display:flex; justify-content:flex-end; align-items:center; }
+      .vavg   { font-size:.72rem; color:var(--secondary-text-color,#888); }
       .loading { font-size:.68rem; color:var(--secondary-text-color,#aaa); font-style:italic; }
       .sensors { display:flex; gap:10px; }
       .chip { display:flex; align-items:center; gap:4px; cursor:pointer;
@@ -175,6 +158,11 @@ class ClimaRoomCard extends HTMLElement {
 
     const valve = cfg.valve_entity ? hass.states[cfg.valve_entity] : null;
     const valvePct = valve ? `${parseFloat(valve.state).toFixed(0)}%` : "—";
+    const avgHtml = this._historyLoading
+      ? `<span class="loading">Laden…</span>`
+      : this._valveAvg != null
+        ? `<span class="vavg">Ø 24h: ${this._valveAvg.toFixed(0)}%</span>`
+        : "";
 
     const tempS = cfg.temp_entity ? hass.states[cfg.temp_entity] : null;
     const humS  = cfg.humidity_entity ? hass.states[cfg.humidity_entity] : null;
@@ -183,15 +171,11 @@ class ClimaRoomCard extends HTMLElement {
 
     const roomName = cfg.room_name || "Zimmer";
 
-    const sparkHtml = this._historyLoading
-      ? `<span class="loading">Laden…</span>`
-      : `<span class="svg-wrap">${this._sparkline(this._valveHistory)}</span>`;
-
     const valveRow = cfg.valve_entity ? `
       <div class="valve" id="valve-row">
         <span class="vlabel">Ventil</span>
         <span class="vpct">${valvePct}</span>
-        <span class="spark">${sparkHtml}</span>
+        ${avgHtml}
       </div>` : "";
 
     const sensorRow = (tempVal || humVal) ? `
@@ -234,13 +218,15 @@ class ClimaRoomCard extends HTMLElement {
     const hass = this._hass;
     const valve = cfg.valve_entity ? hass.states[cfg.valve_entity] : null;
     const valvePct = valve ? `${parseFloat(valve.state).toFixed(0)}%` : "—";
-    const sparkHtml = this._historyLoading
+    const avgHtml = this._historyLoading
       ? `<span class="loading">Laden…</span>`
-      : `<span class="svg-wrap">${this._sparkline(this._valveHistory)}</span>`;
+      : this._valveAvg != null
+        ? `<span class="vavg">Ø 24h: ${this._valveAvg.toFixed(0)}%</span>`
+        : "";
     row.innerHTML = `
       <span class="vlabel">Ventil</span>
       <span class="vpct">${valvePct}</span>
-      <span class="spark">${sparkHtml}</span>`;
+      ${avgHtml}`;
   }
 
   // ---- Visual editor ---------------------------------------------------------
