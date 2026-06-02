@@ -5,7 +5,7 @@
  * type: custom:clima-room-card
  */
 
-const CLIMA_CARD_VERSION = "1.0.9";
+const CLIMA_CARD_VERSION = "1.1.0";
 console.info(`%c CLIMA-ROOM-CARD %c v${CLIMA_CARD_VERSION} `, "background:#03a9f4;color:#fff;font-weight:700", "background:#ccc;color:#000");
 
 class ClimaRoomCard extends HTMLElement {
@@ -78,16 +78,24 @@ class ClimaRoomCard extends HTMLElement {
         .badge.heat_cool,.badge.auto { background:rgba(156,39,176,.35); color:#e1bee7; }
         /* Body */
         .body { padding:10px 12px; }
-        /* Temp + Valve 50/50 */
+        /* Tiles 50/50 */
         .main-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
-        .temp-cell { display:flex; flex-direction:column; justify-content:center; }
-        .temp-label { font-size:.62rem; color:var(--secondary-text-color,#aaa);
-                      text-transform:uppercase; letter-spacing:.04em; margin-bottom:2px; }
-        .target { font-size:2rem; font-weight:700; cursor:pointer;
-                  color:var(--primary-text-color); line-height:1; }
-        .target:hover { opacity:.75; }
-        .valve-cell { display:flex; flex-direction:column; justify-content:center;
-                      align-items:flex-end; cursor:pointer;
+        .temp-cell { display:flex; flex-direction:column; align-items:flex-end; cursor:pointer;
+                     background:rgba(30,136,229,.08); border-radius:8px; padding:6px 10px;
+                     min-height:62px; }
+        .temp-cell:active { background:rgba(30,136,229,.18); }
+        .temp-label { font-size:.62rem; color:#1565c0; text-transform:uppercase;
+                      letter-spacing:.04em; margin-bottom:2px; }
+        .target { font-size:1.4rem; font-weight:700; color:#1565c0; line-height:1; }
+        .hvac-badge { font-size:.6rem; font-weight:700; text-transform:uppercase;
+                      padding:2px 6px; border-radius:5px; margin-top:auto;
+                      background:rgba(255,255,255,.6); color:#1565c0;
+                      border:1px solid rgba(30,136,229,.25); white-space:nowrap; }
+        .hvac-badge.off       { background:rgba(0,0,0,.05); color:#bbb; border-color:#e0e0e0; }
+        .hvac-badge.heat      { background:rgba(255,152,0,.12); color:#e65100; border-color:rgba(255,152,0,.3); }
+        .hvac-badge.cool      { background:rgba(33,150,243,.12); color:#1565c0; border-color:rgba(33,150,243,.3); }
+        .hvac-badge.heat_cool,.hvac-badge.auto { background:rgba(156,39,176,.12); color:#6a1b9a; border-color:rgba(156,39,176,.3); }
+        .valve-cell { display:flex; flex-direction:column; align-items:flex-end; cursor:pointer;
                       background:rgba(30,136,229,.08); border-radius:8px; padding:6px 10px; }
         .valve-cell:active { background:rgba(30,136,229,.18); }
         .vlabel { font-size:.62rem; color:#1565c0; text-transform:uppercase;
@@ -105,13 +113,13 @@ class ClimaRoomCard extends HTMLElement {
       <ha-card>
         <div class="header">
           <span class="room"><span id="room-name"></span><span class="ver">v${CLIMA_CARD_VERSION}</span></span>
-          <span class="badge off" id="badge">off</span>
         </div>
         <div class="body">
           <div class="main-row">
-            <div class="temp-cell">
+            <div class="temp-cell" id="target">
               <span class="temp-label">Soll-Temp</span>
-              <span class="target" id="target">—°</span>
+              <span id="target-val">—°</span>
+              <span class="hvac-badge off" id="hvac-badge">off</span>
             </div>
             ${cfg.valve_entity ? `
             <div class="valve-cell" id="valve-cell">
@@ -150,10 +158,10 @@ class ClimaRoomCard extends HTMLElement {
       : "—";
     const hvacMode  = climate?.state ?? "off";
 
-    sr.getElementById("target").textContent = `${targetTemp}°`;
-    const badge = sr.getElementById("badge");
-    badge.textContent  = hvacMode.replace(/_/g, " ");
-    badge.className    = `badge ${hvacMode}`;
+    sr.getElementById("target-val").textContent = `${targetTemp}°`;
+    const badge = sr.getElementById("hvac-badge");
+    badge.textContent = hvacMode.replace(/_/g, " ");
+    badge.className   = `hvac-badge ${hvacMode}`;
 
     // Valve
     if (cfg.valve_entity) {
@@ -299,30 +307,19 @@ class ClimaRoomCardEditor extends HTMLElement {
         </div>
         <div class="field">
           <label>Thermostat Entity *</label>
-          <ha-entity-picker id="climate_entity" allow-custom-entity
-            .value="${c.climate_entity || ""}"
-            .includeDomains=${["climate"]}>
-          </ha-entity-picker>
+          <ha-entity-picker id="climate_entity" allow-custom-entity></ha-entity-picker>
         </div>
         <div class="field">
           <label>Ventil Entity (optional)</label>
-          <ha-entity-picker id="valve_entity" allow-custom-entity
-            .value="${c.valve_entity || ""}">
-          </ha-entity-picker>
+          <ha-entity-picker id="valve_entity" allow-custom-entity></ha-entity-picker>
         </div>
         <div class="field">
           <label>Temperatur Sensor (optional)</label>
-          <ha-entity-picker id="temp_entity" allow-custom-entity
-            .value="${c.temp_entity || ""}"
-            .includeDomains=${["sensor"]}>
-          </ha-entity-picker>
+          <ha-entity-picker id="temp_entity" allow-custom-entity></ha-entity-picker>
         </div>
         <div class="field">
           <label>Luftfeuchte Sensor (optional)</label>
-          <ha-entity-picker id="humidity_entity" allow-custom-entity
-            .value="${c.humidity_entity || ""}"
-            .includeDomains=${["sensor"]}>
-          </ha-entity-picker>
+          <ha-entity-picker id="humidity_entity" allow-custom-entity></ha-entity-picker>
         </div>
         <small>* Pflichtfeld</small>
       </div>`;
@@ -333,10 +330,18 @@ class ClimaRoomCardEditor extends HTMLElement {
       this._fireChange();
     });
 
-    // Entity pickers
-    ["climate_entity", "valve_entity", "temp_entity", "humidity_entity"].forEach((key) => {
+    // Entity pickers — set properties after render
+    const pickerDomains = {
+      climate_entity:  ["climate"],
+      valve_entity:    null,
+      temp_entity:     ["sensor"],
+      humidity_entity: ["sensor"],
+    };
+    Object.entries(pickerDomains).forEach(([key, domains]) => {
       const el = this.shadowRoot.getElementById(key);
       if (this._hass) el.hass = this._hass;
+      el.value = c[key] || "";
+      if (domains) el.includeDomains = domains;
       el.addEventListener("value-changed", (e) => {
         this._config = { ...this._config, [key]: e.detail.value };
         this._fireChange();
