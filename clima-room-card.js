@@ -5,7 +5,18 @@
  * type: custom:clima-room-card
  */
 
-const CLIMA_CARD_VERSION = "1.1.2";
+const CLIMA_CARD_VERSION = "1.1.3";
+
+// Force Home Assistant to register <ha-entity-picker> by instantiating the
+// config element of a built-in card that uses it. Without this, the element
+// may never be defined and pickers stay empty.
+const loadEntityPicker = async () => {
+  if (customElements.get("ha-entity-picker")) return;
+  if (!window.loadCardHelpers) return;
+  const helpers = await window.loadCardHelpers();
+  const entitiesCard = await helpers.createCardElement({ type: "entities", entities: [] });
+  await entitiesCard.constructor.getConfigElement();
+};
 console.info(`%c CLIMA-ROOM-CARD %c v${CLIMA_CARD_VERSION} `, "background:#03a9f4;color:#fff;font-weight:700", "background:#ccc;color:#000");
 
 class ClimaRoomCard extends HTMLElement {
@@ -19,13 +30,11 @@ class ClimaRoomCard extends HTMLElement {
     this._lastHistoryFetch = 0;
     this._built = false;
 
-    // Event delegation on shadow root — survives any innerHTML changes
+    // Event delegation on shadow root — survives any innerHTML changes.
+    // Resolve the nearest ancestor that declares which entity to open.
     this.shadowRoot.addEventListener("click", (e) => {
-      const id = e.target.id || e.target.closest("[id]")?.id;
-      if (id === "target")      this._moreInfo(this._config.climate_entity);
-      if (id === "valve-cell")  this._moreInfo(this._config.valve_entity);
-      if (id === "chip-temp")   this._moreInfo(this._config.temp_entity);
-      if (id === "chip-hum")    this._moreInfo(this._config.humidity_entity);
+      const el = e.target.closest("[data-more]");
+      if (el) this._moreInfo(this._config[el.dataset.more]);
     });
   }
 
@@ -116,21 +125,21 @@ class ClimaRoomCard extends HTMLElement {
         </div>
         <div class="body">
           <div class="main-row">
-            <div class="temp-cell" id="target">
+            <div class="temp-cell" data-more="climate_entity">
               <span class="temp-label">Soll-Temp</span>
               <span class="target" id="target-val">—°</span>
               <span class="hvac-badge off" id="hvac-badge">off</span>
             </div>
             ${cfg.valve_entity ? `
-            <div class="valve-cell" id="valve-cell">
+            <div class="valve-cell" data-more="valve_entity">
               <span class="vlabel">Ventil</span>
               <span class="vpct" id="valve-pct">—</span>
               <span class="vavg" id="valve-avg"></span>
             </div>` : ""}
           </div>
           <div class="sensors">
-            ${cfg.temp_entity     ? `<div class="chip" id="chip-temp">🌡 —</div>` : ""}
-            ${cfg.humidity_entity ? `<div class="chip" id="chip-hum">💧 —</div>`  : ""}
+            ${cfg.temp_entity     ? `<div class="chip" id="chip-temp" data-more="temp_entity">🌡 —</div>` : ""}
+            ${cfg.humidity_entity ? `<div class="chip" id="chip-hum" data-more="humidity_entity">💧 —</div>`  : ""}
           </div>
         </div>
       </ha-card>`;
@@ -266,8 +275,9 @@ class ClimaRoomCardEditor extends HTMLElement {
     this._hass = null;
   }
 
-  setConfig(config) {
+  async setConfig(config) {
     this._config = { ...config };
+    await loadEntityPicker();
     this._render();
   }
 
@@ -330,27 +340,24 @@ class ClimaRoomCardEditor extends HTMLElement {
       this._fireChange();
     });
 
-    // Entity pickers — wait for element upgrade, then set properties
+    // Entity pickers — picker element is loaded before _render() runs
     const pickerDomains = {
       climate_entity:  ["climate"],
       valve_entity:    null,
       temp_entity:     ["sensor"],
       humidity_entity: ["sensor"],
     };
-    const initPickers = () => {
-      Object.entries(pickerDomains).forEach(([key, domains]) => {
-        const el = this.shadowRoot.getElementById(key);
-        if (!el) return;
-        if (this._hass) el.hass = this._hass;
-        el.value = c[key] || "";
-        if (domains) el.includeDomains = domains;
-        el.addEventListener("value-changed", (e) => {
-          this._config = { ...this._config, [key]: e.detail.value };
-          this._fireChange();
-        });
+    Object.entries(pickerDomains).forEach(([key, domains]) => {
+      const el = this.shadowRoot.getElementById(key);
+      if (!el) return;
+      if (this._hass) el.hass = this._hass;
+      el.value = c[key] || "";
+      if (domains) el.includeDomains = domains;
+      el.addEventListener("value-changed", (e) => {
+        this._config = { ...this._config, [key]: e.detail.value };
+        this._fireChange();
       });
-    };
-    customElements.whenDefined("ha-entity-picker").then(initPickers);
+    });
   }
 }
 
