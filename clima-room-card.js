@@ -5,7 +5,7 @@
  * type: custom:clima-room-card
  */
 
-const CLIMA_CARD_VERSION = "1.0.5";
+const CLIMA_CARD_VERSION = "1.0.6";
 console.info(`%c CLIMA-ROOM-CARD %c v${CLIMA_CARD_VERSION} `, "background:#03a9f4;color:#fff;font-weight:700", "background:#ccc;color:#000");
 
 class ClimaRoomCard extends HTMLElement {
@@ -22,9 +22,7 @@ class ClimaRoomCard extends HTMLElement {
     // Event delegation on shadow root — survives any innerHTML changes
     this.shadowRoot.addEventListener("click", (e) => {
       const id = e.target.id || e.target.closest("[id]")?.id;
-      if (id === "btn-minus")  this._adjustTemp(-0.5);
-      if (id === "btn-plus")   this._adjustTemp(0.5);
-      if (id === "target")     this._moreInfo(this._config.climate_entity);
+if (id === "target")     this._moreInfo(this._config.climate_entity);
       if (id === "chip-temp")  this._moreInfo(this._config.temp_entity);
       if (id === "chip-hum")   this._moreInfo(this._config.humidity_entity);
     });
@@ -70,14 +68,7 @@ class ClimaRoomCard extends HTMLElement {
         .target { font-size:1.9rem; font-weight:700; cursor:pointer; flex:1;
                   color:var(--primary-text-color); line-height:1; }
         .target:hover { color:var(--primary-color,#03a9f4); }
-        .btn { background:none; border:1px solid var(--divider-color,#ccc);
-               border-radius:50%; width:28px; height:28px; cursor:pointer;
-               font-size:1.1rem; color:var(--primary-text-color);
-               display:flex; align-items:center; justify-content:center; padding:0;
-               flex-shrink:0; }
-        .btn:active { background:var(--primary-color,#03a9f4); color:#fff;
-                      border-color:var(--primary-color,#03a9f4); }
-        .badge { font-size:.62rem; font-weight:700; text-transform:uppercase;
+.badge { font-size:.62rem; font-weight:700; text-transform:uppercase;
                  padding:2px 6px; border-radius:10px;
                  background:var(--primary-color,#03a9f4); color:#fff; white-space:nowrap; }
         .badge.off       { background:var(--disabled-text-color,#bbb); }
@@ -102,8 +93,6 @@ class ClimaRoomCard extends HTMLElement {
         </div>
         <div class="thermo">
           <span class="target" id="target">—°</span>
-          <button class="btn" id="btn-minus">−</button>
-          <button class="btn" id="btn-plus">+</button>
           <span class="badge off" id="badge">off</span>
         </div>
         ${cfg.valve_entity ? `
@@ -217,18 +206,6 @@ class ClimaRoomCard extends HTMLElement {
     this.dispatchEvent(new CustomEvent("hass-more-info", {
       bubbles: true, composed: true, detail: { entityId },
     }));
-  }
-
-  _adjustTemp(delta) {
-    const climate = this._hass?.states[this._config.climate_entity];
-    if (!climate) return;
-    const current = parseFloat(climate.attributes.temperature) || 20;
-    const step    = parseFloat(climate.attributes.target_temp_step) || 0.5;
-    const newTemp = Math.round((current + delta) / step) * step;
-    this._hass.callService("climate", "set_temperature", {
-      entity_id: this._config.climate_entity,
-      temperature: newTemp,
-    });
   }
 
   // ---- Visual editor ---------------------------------------------------------
