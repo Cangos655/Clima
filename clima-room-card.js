@@ -5,7 +5,7 @@
  * type: custom:clima-room-card
  */
 
-const CLIMA_CARD_VERSION = "1.1.1";
+const CLIMA_CARD_VERSION = "1.1.2";
 console.info(`%c CLIMA-ROOM-CARD %c v${CLIMA_CARD_VERSION} `, "background:#03a9f4;color:#fff;font-weight:700", "background:#ccc;color:#000");
 
 class ClimaRoomCard extends HTMLElement {
@@ -330,23 +330,27 @@ class ClimaRoomCardEditor extends HTMLElement {
       this._fireChange();
     });
 
-    // Entity pickers — set properties after render
+    // Entity pickers — wait for element upgrade, then set properties
     const pickerDomains = {
       climate_entity:  ["climate"],
       valve_entity:    null,
       temp_entity:     ["sensor"],
       humidity_entity: ["sensor"],
     };
-    Object.entries(pickerDomains).forEach(([key, domains]) => {
-      const el = this.shadowRoot.getElementById(key);
-      if (this._hass) el.hass = this._hass;
-      el.value = c[key] || "";
-      if (domains) el.includeDomains = domains;
-      el.addEventListener("value-changed", (e) => {
-        this._config = { ...this._config, [key]: e.detail.value };
-        this._fireChange();
+    const initPickers = () => {
+      Object.entries(pickerDomains).forEach(([key, domains]) => {
+        const el = this.shadowRoot.getElementById(key);
+        if (!el) return;
+        if (this._hass) el.hass = this._hass;
+        el.value = c[key] || "";
+        if (domains) el.includeDomains = domains;
+        el.addEventListener("value-changed", (e) => {
+          this._config = { ...this._config, [key]: e.detail.value };
+          this._fireChange();
+        });
       });
-    });
+    };
+    customElements.whenDefined("ha-entity-picker").then(initPickers);
   }
 }
 
