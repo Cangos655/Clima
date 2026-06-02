@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clima Room Card – Design Vorschläge</title>
+<title>Clima Room Card – Layout Anpassung</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -14,240 +14,116 @@
   }
   h1 { font-size: 1.1rem; font-weight: 600; margin-bottom: 6px; color: #444; }
   .subtitle { font-size: .8rem; color: #888; margin-bottom: 32px; }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 32px;
-  }
-  .variant { }
+  .grid { display: flex; gap: 32px; flex-wrap: wrap; align-items: flex-start; }
   .variant-title {
     font-size: .7rem; font-weight: 700; text-transform: uppercase;
     letter-spacing: .08em; color: #888; margin-bottom: 10px;
   }
 
-  /* ── VARIANTE 1: Aktuell ──────────────────────────────── */
-  .v0 {
+  /* ── Gemeinsame Basis ─────────────────────────────────── */
+  .card {
     background: #fff;
     border-radius: 12px;
-    padding: 10px 14px;
-    box-shadow: 0 1px 4px rgba(0,0,0,.08);
-    width: 220px;
-  }
-  .v0 .room { font-size:.75rem; font-weight:700; text-transform:uppercase;
-    letter-spacing:.06em; color:#888; margin-bottom:6px; }
-  .v0 .ver { font-size:.6rem; font-weight:400; opacity:.5; }
-  .v0 .thermo { display:flex; align-items:center; gap:6px; margin-bottom:5px; }
-  .v0 .target { font-size:1.9rem; font-weight:700; flex:1; line-height:1; }
-  .v0 .badge { font-size:.62rem; font-weight:700; text-transform:uppercase;
-    padding:2px 6px; border-radius:10px; background:#bbb; color:#fff; }
-  .v0 .valve { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
-  .v0 .vlabel { font-size:.72rem; color:#888; }
-  .v0 .vpct { font-size:.82rem; font-weight:700; min-width:34px; }
-  .v0 .vavg { font-size:.72rem; color:#888; }
-  .v0 .sensors { display:flex; gap:10px; }
-  .v0 .chip { display:flex; align-items:center; gap:4px;
-    padding:3px 8px; border-radius:12px; background:rgba(0,0,0,.05);
-    font-size:.82rem; font-weight:600; }
-
-  /* ── VARIANTE 2: Strukturiert ─────────────────────────── */
-  .v1 {
-    background: #fff;
-    border-radius: 12px;
-    padding: 12px 14px;
-    box-shadow: 0 1px 4px rgba(0,0,0,.08);
-    width: 220px;
-  }
-  .v1 .room {
-    font-size:.7rem; font-weight:700; text-transform:uppercase;
-    letter-spacing:.08em; color:#aaa; margin-bottom:10px;
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .v1 .badge {
-    font-size:.6rem; font-weight:700; text-transform:uppercase;
-    padding:2px 7px; border-radius:6px; background:#eee; color:#999;
-    letter-spacing:.04em;
-  }
-  .v1 .badge.heat { background:#fff3e0; color:#e65100; }
-  .v1 .temp-row {
-    display: flex; align-items: baseline; gap: 6px; margin-bottom: 10px;
-  }
-  .v1 .target { font-size:2.2rem; font-weight:300; line-height:1; color:#111; }
-  .v1 .unit { font-size:1rem; color:#aaa; }
-  .v1 .divider { border:none; border-top:1px solid #f0f0f0; margin-bottom:8px; }
-  .v1 .info-row {
-    display:flex; justify-content:space-between; align-items:center;
-    margin-bottom:8px;
-  }
-  .v1 .label { font-size:.7rem; color:#aaa; }
-  .v1 .value { font-size:.82rem; font-weight:600; color:#333; }
-  .v1 .avg { font-size:.7rem; color:#bbb; }
-  .v1 .sensor-row { display:flex; gap:8px; }
-  .v1 .chip {
-    flex:1; display:flex; flex-direction:column; align-items:center;
-    padding:5px 8px; border-radius:8px; background:#f8f8f8;
-    gap:2px;
-  }
-  .v1 .chip .lbl { font-size:.62rem; color:#aaa; text-transform:uppercase; letter-spacing:.05em; }
-  .v1 .chip .val { font-size:.95rem; font-weight:600; color:#333; }
-
-  /* ── VARIANTE 3: Farbakzent ───────────────────────────── */
-  .v2 {
-    background: #fff;
-    border-radius: 12px;
-    padding: 0;
-    box-shadow: 0 1px 4px rgba(0,0,0,.1);
+    box-shadow: 0 1px 6px rgba(0,0,0,.12);
     width: 220px;
     overflow: hidden;
   }
-  .v2 .header {
+  .header {
     background: linear-gradient(135deg, #1e88e5, #1565c0);
-    padding: 10px 14px;
-    display: flex; justify-content:space-between; align-items:center;
+    padding: 8px 12px;
+    display: flex; justify-content: space-between; align-items: center;
   }
-  .v2 .room { font-size:.7rem; font-weight:700; text-transform:uppercase;
-    letter-spacing:.08em; color:rgba(255,255,255,.8); }
-  .v2 .badge { font-size:.6rem; font-weight:700; text-transform:uppercase;
-    padding:2px 7px; border-radius:6px;
-    background:rgba(255,255,255,.2); color:#fff; }
-  .v2 .body { padding: 10px 14px; }
-  .v2 .target { font-size:2rem; font-weight:700; color:#1565c0; line-height:1.1; margin-bottom:8px; }
-  .v2 .valve-row {
-    display:flex; align-items:center; justify-content:space-between;
-    background:#f0f6ff; border-radius:8px; padding:5px 10px; margin-bottom:8px;
-  }
-  .v2 .valve-label { font-size:.7rem; color:#666; }
-  .v2 .valve-vals { font-size:.8rem; font-weight:600; color:#1565c0; }
-  .v2 .valve-avg { font-size:.68rem; color:#90caf9; font-weight:400; }
-  .v2 .sensors { display:flex; gap:8px; }
-  .v2 .chip {
-    flex:1; display:flex; align-items:center; justify-content:center; gap:5px;
-    padding:4px 8px; border-radius:8px; background:#f5f5f5;
-    font-size:.82rem; font-weight:600; color:#333;
-  }
+  .room { font-size:.7rem; font-weight:700; text-transform:uppercase;
+          letter-spacing:.08em; color:rgba(255,255,255,.9); }
+  .ver  { font-size:.58rem; opacity:.6; margin-left:4px; }
+  .badge { font-size:.6rem; font-weight:700; text-transform:uppercase;
+           padding:2px 7px; border-radius:6px;
+           background:rgba(255,255,255,.2); color:#fff; }
+  .body { padding: 10px 12px; }
+  .sensors { display:flex; gap:8px; }
+  .chip { flex:1; display:flex; align-items:center; justify-content:center; gap:5px;
+          padding:5px 8px; border-radius:8px;
+          background:rgba(0,0,0,.04); font-size:.82rem; font-weight:600; }
 
-  /* ── VARIANTE 4: Kompakt zweispaltig ─────────────────── */
-  .v3 {
-    background: #fff;
-    border-radius: 12px;
-    padding: 12px 14px;
-    box-shadow: 0 1px 4px rgba(0,0,0,.08);
-    width: 220px;
-  }
-  .v3 .room {
-    font-size:.68rem; font-weight:700; text-transform:uppercase;
-    letter-spacing:.08em; color:#bbb; margin-bottom:8px;
-  }
-  .v3 .main {
-    display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:8px;
-  }
-  .v3 .cell {
-    background:#f7f7f7; border-radius:8px; padding:7px 9px;
-  }
-  .v3 .cell .lbl { font-size:.62rem; color:#aaa; text-transform:uppercase; letter-spacing:.04em; margin-bottom:2px; }
-  .v3 .cell .val { font-size:1.05rem; font-weight:700; color:#222; line-height:1.1; }
-  .v3 .cell .sub { font-size:.65rem; color:#bbb; margin-top:1px; }
-  .v3 .cell.accent { background:#e8f5e9; }
-  .v3 .cell.accent .val { color:#2e7d32; }
-  .v3 .badge-row { display:flex; justify-content:flex-end; }
-  .v3 .badge { font-size:.6rem; font-weight:700; text-transform:uppercase;
-    padding:2px 7px; border-radius:6px; background:#eee; color:#999; }
+  /* ── Aktuell (v1.0.7) ──────────────────────────────────── */
+  .current .main-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .current .target   { font-size:2rem; font-weight:700; flex:1; line-height:1; }
+  .current .valve-block { display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
+  .current .vlabel { font-size:.65rem; color:#888; text-transform:uppercase; letter-spacing:.04em; }
+  .current .vpct   { font-size:1rem; font-weight:700; line-height:1; }
+  .current .vavg   { font-size:.68rem; color:#aaa; }
 
-  /* ── VARIANTE 5: Dunkel ───────────────────────────────── */
-  .v4 {
-    background: #1e1e2e;
-    border-radius: 12px;
-    padding: 12px 14px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.3);
-    width: 220px;
+  /* ── Vorschlag 1: kein flex:1 auf target, feste Breite Ventil ── */
+  .p1 .main-row { display:flex; align-items:center; margin-bottom:8px; }
+  .p1 .target   { font-size:2rem; font-weight:700; line-height:1; margin-right:auto; }
+  .p1 .valve-block {
+    display:flex; flex-direction:column; align-items:flex-end; gap:2px;
+    background: rgba(30,136,229,.07);
+    border-radius: 8px;
+    padding: 5px 10px;
+    min-width: 80px;
   }
-  .v4 .room { font-size:.68rem; font-weight:700; text-transform:uppercase;
-    letter-spacing:.08em; color:#6c6c8a; margin-bottom:8px;
-    display:flex; justify-content:space-between; align-items:center; }
-  .v4 .badge { font-size:.6rem; font-weight:700; text-transform:uppercase;
-    padding:2px 7px; border-radius:6px; background:#2a2a3e; color:#6c6c8a; }
-  .v4 .badge.heat { background:#3d2000; color:#ffb74d; }
-  .v4 .target { font-size:2.2rem; font-weight:700; color:#e0e0ff; line-height:1; margin-bottom:8px; }
-  .v4 .valve-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
-  .v4 .vlabel { font-size:.7rem; color:#6c6c8a; }
-  .v4 .vpct { font-size:.82rem; font-weight:600; color:#a0a0c0; }
-  .v4 .vavg { font-size:.68rem; color:#4a4a6a; }
-  .v4 .sensors { display:flex; gap:8px; }
-  .v4 .chip { flex:1; display:flex; align-items:center; justify-content:center; gap:5px;
-    padding:5px 8px; border-radius:8px; background:#2a2a3e;
-    font-size:.82rem; font-weight:600; color:#c0c0e0; }
+  .p1 .vlabel { font-size:.62rem; color:#1565c0; text-transform:uppercase; letter-spacing:.04em; }
+  .p1 .vpct   { font-size:1.1rem; font-weight:700; color:#1565c0; line-height:1; }
+  .p1 .vavg   { font-size:.68rem; color:#90caf9; }
+
+  /* ── Vorschlag 2: 50/50 split ──────────────────────────── */
+  .p2 .main-row {
+    display:grid; grid-template-columns:1fr 1fr;
+    gap:0; margin-bottom:8px;
+    border-radius:8px; overflow:hidden;
+  }
+  .p2 .temp-cell {
+    display:flex; flex-direction:column; justify-content:center;
+    padding: 6px 4px 6px 0;
+  }
+  .p2 .temp-label { font-size:.62rem; color:#aaa; text-transform:uppercase; letter-spacing:.04em; margin-bottom:2px; }
+  .p2 .target { font-size:2rem; font-weight:700; line-height:1; }
+  .p2 .valve-cell {
+    display:flex; flex-direction:column; justify-content:center; align-items:flex-end;
+    background: rgba(30,136,229,.07);
+    border-radius:8px;
+    padding: 6px 10px;
+  }
+  .p2 .vlabel { font-size:.62rem; color:#1565c0; text-transform:uppercase; letter-spacing:.04em; margin-bottom:2px; }
+  .p2 .vpct   { font-size:1.4rem; font-weight:700; color:#1565c0; line-height:1; }
+  .p2 .vavg   { font-size:.68rem; color:#90caf9; margin-top:2px; }
+
+  /* ── Vorschlag 3: Ventil als Fortschrittsbalken ─────────── */
+  .p3 .main-row { display:flex; align-items:center; gap:0; margin-bottom:8px; }
+  .p3 .target   { font-size:2rem; font-weight:700; flex:1; line-height:1; }
+  .p3 .valve-block { display:flex; flex-direction:column; align-items:flex-end; gap:3px; min-width:70px; }
+  .p3 .vlabel { font-size:.62rem; color:#888; text-transform:uppercase; letter-spacing:.04em; }
+  .p3 .vpct   { font-size:1.1rem; font-weight:700; line-height:1; }
+  .p3 .vavg   { font-size:.68rem; color:#aaa; }
+  .p3 .bar-wrap { width:70px; height:5px; background:rgba(0,0,0,.08); border-radius:3px; }
+  .p3 .bar     { height:5px; background:#1e88e5; border-radius:3px; width:2%; }
+  .p3 .bar-avg { height:5px; background:rgba(30,136,229,.25); border-radius:3px; width:2%; margin-top:2px; }
 </style>
 </head>
 <body>
 
-<h1>Clima Room Card – Design Vorschläge</h1>
-<p class="subtitle">Gleiche Größe, gleiche Daten — nur unterschiedliche Optik. Klicken Sie auf einen Favoriten.</p>
+<h1>Clima Room Card – Ventil-Layout Anpassung</h1>
+<p class="subtitle">Ziel: weniger Freiraum zwischen Soll-Temp und Ventil, Ventil mehr Platz. Welcher Vorschlag gefällt?</p>
 
 <div class="grid">
 
   <!-- Aktuell -->
-  <div class="variant">
-    <div class="variant-title">Aktuell (Referenz)</div>
-    <div class="v0">
-      <div class="room">Wohnzimmer <span class="ver">v1.0.6</span></div>
-      <div class="thermo">
-        <span class="target">5.5°</span>
-        <span class="badge">OFF</span>
-      </div>
-      <div class="valve">
-        <span class="vlabel">Ventil</span>
-        <span class="vpct">0%</span>
-        <span class="vavg">Ø 24h: 2%</span>
-      </div>
-      <div class="sensors">
-        <div class="chip">🌡 23.3°</div>
-        <div class="chip">💧 52%</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Variante 1 -->
-  <div class="variant">
-    <div class="variant-title">Variante A – Strukturiert & Aufgeräumt</div>
-    <div class="v1">
-      <div class="room">
-        Wohnzimmer
-        <span class="badge">OFF</span>
-      </div>
-      <div class="temp-row">
-        <span class="target">5.5</span>
-        <span class="unit">°C</span>
-      </div>
-      <hr class="divider">
-      <div class="info-row">
-        <span class="label">Ventil aktuell</span>
-        <span class="value">0% <span class="avg">· Ø 24h: 2%</span></span>
-      </div>
-      <div class="sensor-row">
-        <div class="chip">
-          <span class="lbl">Temp</span>
-          <span class="val">23.3°</span>
-        </div>
-        <div class="chip">
-          <span class="lbl">Feuchte</span>
-          <span class="val">52%</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Variante 2 -->
-  <div class="variant">
-    <div class="variant-title">Variante B – Farbiger Header</div>
-    <div class="v2">
+  <div>
+    <div class="variant-title">Aktuell v1.0.7 (Referenz)</div>
+    <div class="card current">
       <div class="header">
-        <span class="room">Wohnzimmer</span>
+        <span class="room">Wohnzimmer <span class="ver">v1.0.7</span></span>
         <span class="badge">OFF</span>
       </div>
       <div class="body">
-        <div class="target">5.5°</div>
-        <div class="valve-row">
-          <span class="valve-label">Ventil</span>
-          <span class="valve-vals">0% <span class="valve-avg">· Ø 24h: 2%</span></span>
+        <div class="main-row">
+          <span class="target">5.5°</span>
+          <div class="valve-block">
+            <span class="vlabel">Ventil</span>
+            <span class="vpct">0%</span>
+            <span class="vavg">Ø 24h: 2%</span>
+          </div>
         </div>
         <div class="sensors">
           <div class="chip">🌡 23.3°</div>
@@ -257,53 +133,82 @@
     </div>
   </div>
 
-  <!-- Variante 3 -->
-  <div class="variant">
-    <div class="variant-title">Variante C – Kachel-Grid</div>
-    <div class="v3">
-      <div class="room">Wohnzimmer</div>
-      <div class="main">
-        <div class="cell">
-          <div class="lbl">Soll-Temp</div>
-          <div class="val">5.5°</div>
-        </div>
-        <div class="cell">
-          <div class="lbl">Ventil</div>
-          <div class="val">0%</div>
-          <div class="sub">Ø 24h: 2%</div>
-        </div>
-        <div class="cell accent">
-          <div class="lbl">Temperatur</div>
-          <div class="val">23.3°</div>
-        </div>
-        <div class="cell">
-          <div class="lbl">Feuchte</div>
-          <div class="val">52%</div>
-        </div>
-      </div>
-      <div class="badge-row">
+  <!-- Vorschlag 1 -->
+  <div>
+    <div class="variant-title">Vorschlag 1 – Ventil als Kachel</div>
+    <div class="card p1">
+      <div class="header">
+        <span class="room">Wohnzimmer <span class="ver">v1.0.7</span></span>
         <span class="badge">OFF</span>
+      </div>
+      <div class="body">
+        <div class="main-row">
+          <span class="target">5.5°</span>
+          <div class="valve-block">
+            <span class="vlabel">Ventil</span>
+            <span class="vpct">0%</span>
+            <span class="vavg">Ø 24h: 2%</span>
+          </div>
+        </div>
+        <div class="sensors">
+          <div class="chip">🌡 23.3°</div>
+          <div class="chip">💧 52%</div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Variante 4 -->
-  <div class="variant">
-    <div class="variant-title">Variante D – Dark Mode</div>
-    <div class="v4">
-      <div class="room">
-        Wohnzimmer
+  <!-- Vorschlag 2 -->
+  <div>
+    <div class="variant-title">Vorschlag 2 – 50/50 Split</div>
+    <div class="card p2">
+      <div class="header">
+        <span class="room">Wohnzimmer <span class="ver">v1.0.7</span></span>
         <span class="badge">OFF</span>
       </div>
-      <div class="target">5.5°</div>
-      <div class="valve-row">
-        <span class="vlabel">Ventil</span>
-        <span class="vpct">0%</span>
-        <span class="vavg">Ø 24h: 2%</span>
+      <div class="body">
+        <div class="main-row">
+          <div class="temp-cell">
+            <span class="temp-label">Soll-Temp</span>
+            <span class="target">5.5°</span>
+          </div>
+          <div class="valve-cell">
+            <span class="vlabel">Ventil</span>
+            <span class="vpct">0%</span>
+            <span class="vavg">Ø 24h: 2%</span>
+          </div>
+        </div>
+        <div class="sensors">
+          <div class="chip">🌡 23.3°</div>
+          <div class="chip">💧 52%</div>
+        </div>
       </div>
-      <div class="sensors">
-        <div class="chip">🌡 23.3°</div>
-        <div class="chip">💧 52%</div>
+    </div>
+  </div>
+
+  <!-- Vorschlag 3 -->
+  <div>
+    <div class="variant-title">Vorschlag 3 – Mit Balken</div>
+    <div class="card p3">
+      <div class="header">
+        <span class="room">Wohnzimmer <span class="ver">v1.0.7</span></span>
+        <span class="badge">OFF</span>
+      </div>
+      <div class="body">
+        <div class="main-row">
+          <span class="target">5.5°</span>
+          <div class="valve-block">
+            <span class="vlabel">Ventil</span>
+            <span class="vpct">0%</span>
+            <div class="bar-wrap"><div class="bar"></div></div>
+            <span class="vavg">Ø 24h: 2%</span>
+            <div class="bar-wrap"><div class="bar-avg"></div></div>
+          </div>
+        </div>
+        <div class="sensors">
+          <div class="chip">🌡 23.3°</div>
+          <div class="chip">💧 52%</div>
+        </div>
       </div>
     </div>
   </div>
