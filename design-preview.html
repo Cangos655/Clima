@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clima Room Card – Soll-Temp als Badge</title>
+<title>Clima Room Card – Status unter Soll-Temp</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -15,108 +15,92 @@
   h1 { font-size: 1.1rem; font-weight: 600; margin-bottom: 6px; color: #444; }
   .subtitle { font-size: .8rem; color: #888; margin-bottom: 32px; }
   .grid { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
-  .variant-title {
-    font-size: .7rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .08em; color: #888; margin-bottom: 10px;
-  }
+  .variant-title { font-size:.7rem; font-weight:700; text-transform:uppercase;
+                   letter-spacing:.08em; color:#888; margin-bottom:10px; }
 
   /* Gemeinsame Basis */
-  .card {
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 1px 6px rgba(0,0,0,.12);
-    width: 220px;
-    overflow: hidden;
-  }
-  .header {
-    background: linear-gradient(135deg, #1e88e5, #1565c0);
-    padding: 8px 12px;
-    display: flex; justify-content: space-between; align-items: center;
-  }
+  .card { background:#fff; border-radius:12px;
+          box-shadow:0 1px 6px rgba(0,0,0,.12); width:220px; overflow:hidden; }
+  .header { background:linear-gradient(135deg,#1e88e5,#1565c0);
+            padding:8px 12px; }
   .room { font-size:.7rem; font-weight:700; text-transform:uppercase;
           letter-spacing:.08em; color:rgba(255,255,255,.9); }
-  .badge-off { font-size:.6rem; font-weight:700; text-transform:uppercase;
-           padding:2px 7px; border-radius:6px;
-           background:rgba(255,255,255,.2); color:#fff; }
-  .body { padding: 10px 12px; }
-  .sensors { display:flex; gap:8px; margin-top:8px; }
+  .body { padding:10px 12px; }
+  .tiles { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
+  .tile { display:flex; flex-direction:column; align-items:flex-end;
+          background:rgba(30,136,229,.08); border-radius:8px; padding:6px 10px; }
+  .tile .lbl { font-size:.62rem; color:#1565c0; text-transform:uppercase;
+               letter-spacing:.04em; margin-bottom:2px; }
+  .tile .val { font-size:1.4rem; font-weight:700; color:#1565c0; line-height:1; }
+  .tile .sub { font-size:.68rem; color:#90caf9; margin-top:2px; }
+  .sensors { display:flex; gap:8px; }
   .chip { flex:1; display:flex; align-items:center; justify-content:center; gap:5px;
-          padding:5px 8px; border-radius:8px;
-          background:rgba(0,0,0,.04); font-size:.82rem; font-weight:600; }
+          padding:5px 8px; border-radius:8px; background:rgba(0,0,0,.04);
+          font-size:.82rem; font-weight:600; }
 
-  /* ── Variante A: gleiche blaue Kacheln ─────────────── */
-  .va .tiles { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-  .va .tile {
-    display:flex; flex-direction:column; align-items:flex-end;
-    background:rgba(30,136,229,.08); border-radius:8px; padding:6px 10px;
+  /* ── A: Badge klein unter dem Wert ─────────────────── */
+  .va .badge {
+    font-size:.58rem; font-weight:700; text-transform:uppercase;
+    padding:1px 6px; border-radius:5px; margin-top:4px;
+    background:rgba(255,255,255,.5); color:#1565c0; border:1px solid rgba(30,136,229,.3);
   }
-  .va .tile .lbl { font-size:.62rem; color:#1565c0; text-transform:uppercase;
-                   letter-spacing:.04em; margin-bottom:2px; }
-  .va .tile .val { font-size:1.4rem; font-weight:700; color:#1565c0; line-height:1; }
-  .va .tile .sub { font-size:.68rem; color:#90caf9; margin-top:2px; }
+  .va .badge.off { background:rgba(0,0,0,.06); color:#aaa; border-color:#ddd; }
+  .va .badge.heat { background:rgba(255,152,0,.15); color:#e65100; border-color:rgba(255,152,0,.3); }
 
-  /* ── Variante B: Soll-Temp orange, Ventil blau ─────── */
-  .vb .tiles { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-  .vb .tile-temp {
-    display:flex; flex-direction:column; align-items:flex-start;
-    background:rgba(255,152,0,.1); border-radius:8px; padding:6px 10px;
+  /* ── B: Status als eigene Zeile mit Text ────────────── */
+  .vb .status-row {
+    display:flex; align-items:center; gap:5px; margin-top:5px;
+    font-size:.7rem; color:#aaa;
   }
-  .vb .tile-temp .lbl { font-size:.62rem; color:#e65100; text-transform:uppercase;
-                         letter-spacing:.04em; margin-bottom:2px; }
-  .vb .tile-temp .val { font-size:1.4rem; font-weight:700; color:#e65100; line-height:1; }
-  .vb .tile-valve {
-    display:flex; flex-direction:column; align-items:flex-end;
-    background:rgba(30,136,229,.08); border-radius:8px; padding:6px 10px;
-  }
-  .vb .tile-valve .lbl { font-size:.62rem; color:#1565c0; text-transform:uppercase;
-                          letter-spacing:.04em; margin-bottom:2px; }
-  .vb .tile-valve .val { font-size:1.4rem; font-weight:700; color:#1565c0; line-height:1; }
-  .vb .tile-valve .sub { font-size:.68rem; color:#90caf9; margin-top:2px; }
+  .vb .dot { width:7px; height:7px; border-radius:50%; background:#bbb; flex-shrink:0; }
+  .vb .dot.heat { background:#ff9800; }
+  .vb .dot.off  { background:#bbb; }
+  .vb .status-text { font-size:.7rem; color:#aaa; }
 
-  /* ── Variante C: beide grau/neutral ────────────────── */
-  .vc .tiles { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-  .vc .tile {
-    display:flex; flex-direction:column;
-    background:#f4f6f8; border-radius:8px; padding:7px 10px;
+  /* ── C: Breiter Badge über volle Kachelbreite ───────── */
+  .vc .tile-temp { align-items:stretch; }
+  .vc .temp-top { display:flex; justify-content:flex-end; }
+  .vc .badge-full {
+    margin-top:5px; padding:3px 0; border-radius:5px; text-align:center;
+    font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em;
+    background:rgba(0,0,0,.07); color:#999;
   }
-  .vc .tile .lbl { font-size:.62rem; color:#aaa; text-transform:uppercase;
-                   letter-spacing:.04em; margin-bottom:3px; }
-  .vc .tile .val { font-size:1.4rem; font-weight:700; color:#222; line-height:1; }
-  .vc .tile .sub { font-size:.68rem; color:#bbb; margin-top:3px; }
-  .vc .tile.right { align-items:flex-end; }
+  .vc .badge-full.heat { background:rgba(255,152,0,.15); color:#e65100; }
+  .vc .badge-full.off  { background:rgba(0,0,0,.06); color:#bbb; }
 
-  /* ── Variante D: Icon + Wert, größer ───────────────── */
-  .vd .tiles { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-  .vd .tile {
-    display:flex; flex-direction:column; align-items:center;
-    background:#f4f6f8; border-radius:8px; padding:8px 10px; gap:2px;
+  /* ── D: Zahl klein, Status prominent ───────────────── */
+  .vd .tile-temp { align-items:flex-start; justify-content:space-between; min-height:58px; }
+  .vd .tile-temp .lbl { color:#1565c0; font-size:.62rem; text-transform:uppercase; letter-spacing:.04em; margin-bottom:2px; }
+  .vd .tile-temp .val { font-size:1.4rem; font-weight:700; color:#1565c0; line-height:1; }
+  .vd .badge {
+    align-self:flex-end;
+    font-size:.6rem; font-weight:700; text-transform:uppercase;
+    padding:2px 7px; border-radius:6px; margin-top:auto;
+    background:rgba(255,255,255,.6); color:#1565c0;
+    border:1px solid rgba(30,136,229,.25);
   }
-  .vd .tile .icon { font-size:1.1rem; }
-  .vd .tile .lbl { font-size:.6rem; color:#aaa; text-transform:uppercase; letter-spacing:.04em; }
-  .vd .tile .val { font-size:1.3rem; font-weight:700; color:#222; line-height:1.1; }
-  .vd .tile .sub { font-size:.65rem; color:#bbb; }
+  .vd .badge.off  { background:rgba(0,0,0,.05); color:#bbb; border-color:#e0e0e0; }
+  .vd .badge.heat { background:rgba(255,152,0,.12); color:#e65100; border-color:rgba(255,152,0,.3); }
 </style>
 </head>
 <body>
 
-<h1>Clima Room Card – Soll-Temp als Badge</h1>
-<p class="subtitle">Beide Werte gleichwertig als Kacheln. Welche Variante gefällt?</p>
+<h1>Clima Room Card – Status unter Soll-Temp</h1>
+<p class="subtitle">Basis: Variante A (beide blaue Kacheln). Status-Badge jetzt in der Temp-Kachel.</p>
 
 <div class="grid">
 
   <!-- Variante A -->
   <div>
-    <div class="variant-title">Variante A – Beide gleich blau</div>
+    <div class="variant-title">Variante A – Kleiner Badge unter Wert</div>
     <div class="card va">
-      <div class="header">
-        <span class="room">Wohnzimmer</span>
-        <span class="badge-off">OFF</span>
-      </div>
+      <div class="header"><span class="room">Wohnzimmer</span></div>
       <div class="body">
         <div class="tiles">
           <div class="tile">
             <span class="lbl">Soll-Temp</span>
             <span class="val">5.5°</span>
+            <span class="badge off">OFF</span>
           </div>
           <div class="tile">
             <span class="lbl">Ventil</span>
@@ -127,6 +111,31 @@
         <div class="sensors">
           <div class="chip">🌡 23.3°</div>
           <div class="chip">💧 52%</div>
+        </div>
+      </div>
+    </div>
+    <!-- mit heat -->
+    <div style="margin-top:10px">
+      <div class="variant-title" style="opacity:.5">→ bei HEAT</div>
+      <div class="card va">
+        <div class="header"><span class="room">Schlafzimmer</span></div>
+        <div class="body">
+          <div class="tiles">
+            <div class="tile">
+              <span class="lbl">Soll-Temp</span>
+              <span class="val">21.0°</span>
+              <span class="badge heat">HEAT</span>
+            </div>
+            <div class="tile">
+              <span class="lbl">Ventil</span>
+              <span class="val">65%</span>
+              <span class="sub">Ø 24h: 40%</span>
+            </div>
+          </div>
+          <div class="sensors">
+            <div class="chip">🌡 19.2°</div>
+            <div class="chip">💧 48%</div>
+          </div>
         </div>
       </div>
     </div>
@@ -134,19 +143,20 @@
 
   <!-- Variante B -->
   <div>
-    <div class="variant-title">Variante B – Temp orange, Ventil blau</div>
+    <div class="variant-title">Variante B – Farbpunkt + Text</div>
     <div class="card vb">
-      <div class="header">
-        <span class="room">Wohnzimmer</span>
-        <span class="badge-off">OFF</span>
-      </div>
+      <div class="header"><span class="room">Wohnzimmer</span></div>
       <div class="body">
         <div class="tiles">
-          <div class="tile-temp">
+          <div class="tile">
             <span class="lbl">Soll-Temp</span>
             <span class="val">5.5°</span>
+            <div class="status-row">
+              <span class="dot off"></span>
+              <span class="status-text">off</span>
+            </div>
           </div>
-          <div class="tile-valve">
+          <div class="tile">
             <span class="lbl">Ventil</span>
             <span class="val">0%</span>
             <span class="sub">Ø 24h: 2%</span>
@@ -155,6 +165,33 @@
         <div class="sensors">
           <div class="chip">🌡 23.3°</div>
           <div class="chip">💧 52%</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <div class="variant-title" style="opacity:.5">→ bei HEAT</div>
+      <div class="card vb">
+        <div class="header"><span class="room">Schlafzimmer</span></div>
+        <div class="body">
+          <div class="tiles">
+            <div class="tile">
+              <span class="lbl">Soll-Temp</span>
+              <span class="val">21.0°</span>
+              <div class="status-row">
+                <span class="dot heat"></span>
+                <span class="status-text">heizen</span>
+              </div>
+            </div>
+            <div class="tile">
+              <span class="lbl">Ventil</span>
+              <span class="val">65%</span>
+              <span class="sub">Ø 24h: 40%</span>
+            </div>
+          </div>
+          <div class="sensors">
+            <div class="chip">🌡 19.2°</div>
+            <div class="chip">💧 48%</div>
+          </div>
         </div>
       </div>
     </div>
@@ -162,19 +199,21 @@
 
   <!-- Variante C -->
   <div>
-    <div class="variant-title">Variante C – Neutral grau</div>
+    <div class="variant-title">Variante C – Badge über volle Breite</div>
     <div class="card vc">
-      <div class="header">
-        <span class="room">Wohnzimmer</span>
-        <span class="badge-off">OFF</span>
-      </div>
+      <div class="header"><span class="room">Wohnzimmer</span></div>
       <div class="body">
         <div class="tiles">
-          <div class="tile">
-            <span class="lbl">Soll-Temp</span>
-            <span class="val">5.5°</span>
+          <div class="tile tile-temp">
+            <div class="temp-top">
+              <span class="lbl">Soll-Temp</span>
+            </div>
+            <div class="temp-top">
+              <span class="val">5.5°</span>
+            </div>
+            <div class="badge-full off">OFF</div>
           </div>
-          <div class="tile right">
+          <div class="tile">
             <span class="lbl">Ventil</span>
             <span class="val">0%</span>
             <span class="sub">Ø 24h: 2%</span>
@@ -186,25 +225,45 @@
         </div>
       </div>
     </div>
+    <div style="margin-top:10px">
+      <div class="variant-title" style="opacity:.5">→ bei HEAT</div>
+      <div class="card vc">
+        <div class="header"><span class="room">Schlafzimmer</span></div>
+        <div class="body">
+          <div class="tiles">
+            <div class="tile tile-temp">
+              <div class="temp-top"><span class="lbl">Soll-Temp</span></div>
+              <div class="temp-top"><span class="val">21.0°</span></div>
+              <div class="badge-full heat">HEAT</div>
+            </div>
+            <div class="tile">
+              <span class="lbl">Ventil</span>
+              <span class="val">65%</span>
+              <span class="sub">Ø 24h: 40%</span>
+            </div>
+          </div>
+          <div class="sensors">
+            <div class="chip">🌡 19.2°</div>
+            <div class="chip">💧 48%</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Variante D -->
   <div>
-    <div class="variant-title">Variante D – Mit Icons, zentriert</div>
+    <div class="variant-title">Variante D – Badge diagonal unten rechts</div>
     <div class="card vd">
-      <div class="header">
-        <span class="room">Wohnzimmer</span>
-        <span class="badge-off">OFF</span>
-      </div>
+      <div class="header"><span class="room">Wohnzimmer</span></div>
       <div class="body">
         <div class="tiles">
-          <div class="tile">
-            <span class="icon">🌡</span>
+          <div class="tile tile-temp">
             <span class="lbl">Soll-Temp</span>
             <span class="val">5.5°</span>
+            <span class="badge off">OFF</span>
           </div>
           <div class="tile">
-            <span class="icon">🔧</span>
             <span class="lbl">Ventil</span>
             <span class="val">0%</span>
             <span class="sub">Ø 24h: 2%</span>
@@ -213,6 +272,30 @@
         <div class="sensors">
           <div class="chip">🌡 23.3°</div>
           <div class="chip">💧 52%</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <div class="variant-title" style="opacity:.5">→ bei HEAT</div>
+      <div class="card vd">
+        <div class="header"><span class="room">Schlafzimmer</span></div>
+        <div class="body">
+          <div class="tiles">
+            <div class="tile tile-temp">
+              <span class="lbl">Soll-Temp</span>
+              <span class="val">21.0°</span>
+              <span class="badge heat">HEAT</span>
+            </div>
+            <div class="tile">
+              <span class="lbl">Ventil</span>
+              <span class="val">65%</span>
+              <span class="sub">Ø 24h: 40%</span>
+            </div>
+          </div>
+          <div class="sensors">
+            <div class="chip">🌡 19.2°</div>
+            <div class="chip">💧 48%</div>
+          </div>
         </div>
       </div>
     </div>
