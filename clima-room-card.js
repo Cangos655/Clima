@@ -5,7 +5,7 @@
  * type: custom:clima-room-card
  */
 
-const CLIMA_CARD_VERSION = "1.0.8";
+const CLIMA_CARD_VERSION = "1.0.9";
 console.info(`%c CLIMA-ROOM-CARD %c v${CLIMA_CARD_VERSION} `, "background:#03a9f4;color:#fff;font-weight:700", "background:#ccc;color:#000");
 
 class ClimaRoomCard extends HTMLElement {
@@ -22,9 +22,10 @@ class ClimaRoomCard extends HTMLElement {
     // Event delegation on shadow root — survives any innerHTML changes
     this.shadowRoot.addEventListener("click", (e) => {
       const id = e.target.id || e.target.closest("[id]")?.id;
-if (id === "target")     this._moreInfo(this._config.climate_entity);
-      if (id === "chip-temp")  this._moreInfo(this._config.temp_entity);
-      if (id === "chip-hum")   this._moreInfo(this._config.humidity_entity);
+      if (id === "target")      this._moreInfo(this._config.climate_entity);
+      if (id === "valve-cell")  this._moreInfo(this._config.valve_entity);
+      if (id === "chip-temp")   this._moreInfo(this._config.temp_entity);
+      if (id === "chip-hum")    this._moreInfo(this._config.humidity_entity);
     });
   }
 
@@ -86,8 +87,9 @@ if (id === "target")     this._moreInfo(this._config.climate_entity);
                   color:var(--primary-text-color); line-height:1; }
         .target:hover { opacity:.75; }
         .valve-cell { display:flex; flex-direction:column; justify-content:center;
-                      align-items:flex-end;
+                      align-items:flex-end; cursor:pointer;
                       background:rgba(30,136,229,.08); border-radius:8px; padding:6px 10px; }
+        .valve-cell:active { background:rgba(30,136,229,.18); }
         .vlabel { font-size:.62rem; color:#1565c0; text-transform:uppercase;
                   letter-spacing:.04em; margin-bottom:2px; }
         .vpct   { font-size:1.4rem; font-weight:700; color:#1565c0; line-height:1; }
@@ -112,7 +114,7 @@ if (id === "target")     this._moreInfo(this._config.climate_entity);
               <span class="target" id="target">—°</span>
             </div>
             ${cfg.valve_entity ? `
-            <div class="valve-cell">
+            <div class="valve-cell" id="valve-cell">
               <span class="vlabel">Ventil</span>
               <span class="vpct" id="valve-pct">—</span>
               <span class="vavg" id="valve-avg"></span>
@@ -253,6 +255,7 @@ class ClimaRoomCardEditor extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this._config = {};
+    this._hass = null;
   }
 
   setConfig(config) {
@@ -260,43 +263,83 @@ class ClimaRoomCardEditor extends HTMLElement {
     this._render();
   }
 
-  set hass(_) {}
+  set hass(hass) {
+    this._hass = hass;
+    // Pass hass to all entity pickers
+    this.shadowRoot.querySelectorAll("ha-entity-picker").forEach((el) => {
+      el.hass = hass;
+    });
+  }
+
+  _fireChange() {
+    this.dispatchEvent(new CustomEvent("config-changed", {
+      bubbles: true, composed: true,
+      detail: { config: this._config },
+    }));
+  }
 
   _render() {
     const c = this._config;
-    const field = (label, key, placeholder, required = false) =>
-      `<label>${label}${required ? " *" : ""}
-        <input data-key="${key}" value="${c[key] || ""}" placeholder="${placeholder}">
-      </label>`;
 
     this.shadowRoot.innerHTML = `
       <style>
-        .form { display:flex; flex-direction:column; gap:10px; padding:8px 0; }
-        label { display:flex; flex-direction:column; font-size:.85rem;
-                color:var(--secondary-text-color,#888); gap:3px; }
+        .form { display:flex; flex-direction:column; gap:12px; padding:8px 0; }
+        .field { display:flex; flex-direction:column; gap:4px; }
+        label { font-size:.85rem; color:var(--secondary-text-color,#888); }
         input { padding:6px 8px; border:1px solid var(--divider-color,#ccc);
                 border-radius:4px; background:var(--card-background-color,#fff);
-                color:var(--primary-text-color); font-size:.9rem; }
+                color:var(--primary-text-color); font-size:.9rem; width:100%; }
         input:focus { outline:none; border-color:var(--primary-color,#03a9f4); }
         small { font-size:.72rem; color:var(--secondary-text-color,#aaa); }
       </style>
       <div class="form">
-        ${field("Zimmer-Name", "room_name", "z.B. Wohnzimmer")}
-        ${field("Thermostat Entity", "climate_entity", "climate.wohnzimmer", true)}
-        ${field("Ventil Entity (optional)", "valve_entity", "sensor.wohnzimmer_ventil")}
-        ${field("Temperatur Sensor (optional)", "temp_entity", "sensor.wohnzimmer_temperatur")}
-        ${field("Luftfeuchte Sensor (optional)", "humidity_entity", "sensor.wohnzimmer_luftfeuchte")}
+        <div class="field">
+          <label>Zimmer-Name</label>
+          <input id="room_name" value="${c.room_name || ""}" placeholder="z.B. Wohnzimmer">
+        </div>
+        <div class="field">
+          <label>Thermostat Entity *</label>
+          <ha-entity-picker id="climate_entity" allow-custom-entity
+            .value="${c.climate_entity || ""}"
+            .includeDomains=${["climate"]}>
+          </ha-entity-picker>
+        </div>
+        <div class="field">
+          <label>Ventil Entity (optional)</label>
+          <ha-entity-picker id="valve_entity" allow-custom-entity
+            .value="${c.valve_entity || ""}">
+          </ha-entity-picker>
+        </div>
+        <div class="field">
+          <label>Temperatur Sensor (optional)</label>
+          <ha-entity-picker id="temp_entity" allow-custom-entity
+            .value="${c.temp_entity || ""}"
+            .includeDomains=${["sensor"]}>
+          </ha-entity-picker>
+        </div>
+        <div class="field">
+          <label>Luftfeuchte Sensor (optional)</label>
+          <ha-entity-picker id="humidity_entity" allow-custom-entity
+            .value="${c.humidity_entity || ""}"
+            .includeDomains=${["sensor"]}>
+          </ha-entity-picker>
+        </div>
         <small>* Pflichtfeld</small>
       </div>`;
 
-    this.shadowRoot.querySelectorAll("input").forEach((input) => {
-      input.addEventListener("change", (e) => {
-        const key = e.target.dataset.key;
-        this._config = { ...this._config, [key]: e.target.value };
-        this.dispatchEvent(new CustomEvent("config-changed", {
-          bubbles: true, composed: true,
-          detail: { config: this._config },
-        }));
+    // Room name input
+    this.shadowRoot.getElementById("room_name").addEventListener("change", (e) => {
+      this._config = { ...this._config, room_name: e.target.value };
+      this._fireChange();
+    });
+
+    // Entity pickers
+    ["climate_entity", "valve_entity", "temp_entity", "humidity_entity"].forEach((key) => {
+      const el = this.shadowRoot.getElementById(key);
+      if (this._hass) el.hass = this._hass;
+      el.addEventListener("value-changed", (e) => {
+        this._config = { ...this._config, [key]: e.detail.value };
+        this._fireChange();
       });
     });
   }
