@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clima Room Card – Layout Anpassung</title>
+<title>Clima Room Card – Soll-Temp als Badge</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -14,13 +14,13 @@
   }
   h1 { font-size: 1.1rem; font-weight: 600; margin-bottom: 6px; color: #444; }
   .subtitle { font-size: .8rem; color: #888; margin-bottom: 32px; }
-  .grid { display: flex; gap: 32px; flex-wrap: wrap; align-items: flex-start; }
+  .grid { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
   .variant-title {
     font-size: .7rem; font-weight: 700; text-transform: uppercase;
     letter-spacing: .08em; color: #888; margin-bottom: 10px;
   }
 
-  /* ── Gemeinsame Basis ─────────────────────────────────── */
+  /* Gemeinsame Basis */
   .card {
     background: #fff;
     border-radius: 12px;
@@ -35,94 +35,93 @@
   }
   .room { font-size:.7rem; font-weight:700; text-transform:uppercase;
           letter-spacing:.08em; color:rgba(255,255,255,.9); }
-  .ver  { font-size:.58rem; opacity:.6; margin-left:4px; }
-  .badge { font-size:.6rem; font-weight:700; text-transform:uppercase;
+  .badge-off { font-size:.6rem; font-weight:700; text-transform:uppercase;
            padding:2px 7px; border-radius:6px;
            background:rgba(255,255,255,.2); color:#fff; }
   .body { padding: 10px 12px; }
-  .sensors { display:flex; gap:8px; }
+  .sensors { display:flex; gap:8px; margin-top:8px; }
   .chip { flex:1; display:flex; align-items:center; justify-content:center; gap:5px;
           padding:5px 8px; border-radius:8px;
           background:rgba(0,0,0,.04); font-size:.82rem; font-weight:600; }
 
-  /* ── Aktuell (v1.0.7) ──────────────────────────────────── */
-  .current .main-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-  .current .target   { font-size:2rem; font-weight:700; flex:1; line-height:1; }
-  .current .valve-block { display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
-  .current .vlabel { font-size:.65rem; color:#888; text-transform:uppercase; letter-spacing:.04em; }
-  .current .vpct   { font-size:1rem; font-weight:700; line-height:1; }
-  .current .vavg   { font-size:.68rem; color:#aaa; }
+  /* ── Variante A: gleiche blaue Kacheln ─────────────── */
+  .va .tiles { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .va .tile {
+    display:flex; flex-direction:column; align-items:flex-end;
+    background:rgba(30,136,229,.08); border-radius:8px; padding:6px 10px;
+  }
+  .va .tile .lbl { font-size:.62rem; color:#1565c0; text-transform:uppercase;
+                   letter-spacing:.04em; margin-bottom:2px; }
+  .va .tile .val { font-size:1.4rem; font-weight:700; color:#1565c0; line-height:1; }
+  .va .tile .sub { font-size:.68rem; color:#90caf9; margin-top:2px; }
 
-  /* ── Vorschlag 1: kein flex:1 auf target, feste Breite Ventil ── */
-  .p1 .main-row { display:flex; align-items:center; margin-bottom:8px; }
-  .p1 .target   { font-size:2rem; font-weight:700; line-height:1; margin-right:auto; }
-  .p1 .valve-block {
-    display:flex; flex-direction:column; align-items:flex-end; gap:2px;
-    background: rgba(30,136,229,.07);
-    border-radius: 8px;
-    padding: 5px 10px;
-    min-width: 80px;
+  /* ── Variante B: Soll-Temp orange, Ventil blau ─────── */
+  .vb .tiles { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .vb .tile-temp {
+    display:flex; flex-direction:column; align-items:flex-start;
+    background:rgba(255,152,0,.1); border-radius:8px; padding:6px 10px;
   }
-  .p1 .vlabel { font-size:.62rem; color:#1565c0; text-transform:uppercase; letter-spacing:.04em; }
-  .p1 .vpct   { font-size:1.1rem; font-weight:700; color:#1565c0; line-height:1; }
-  .p1 .vavg   { font-size:.68rem; color:#90caf9; }
+  .vb .tile-temp .lbl { font-size:.62rem; color:#e65100; text-transform:uppercase;
+                         letter-spacing:.04em; margin-bottom:2px; }
+  .vb .tile-temp .val { font-size:1.4rem; font-weight:700; color:#e65100; line-height:1; }
+  .vb .tile-valve {
+    display:flex; flex-direction:column; align-items:flex-end;
+    background:rgba(30,136,229,.08); border-radius:8px; padding:6px 10px;
+  }
+  .vb .tile-valve .lbl { font-size:.62rem; color:#1565c0; text-transform:uppercase;
+                          letter-spacing:.04em; margin-bottom:2px; }
+  .vb .tile-valve .val { font-size:1.4rem; font-weight:700; color:#1565c0; line-height:1; }
+  .vb .tile-valve .sub { font-size:.68rem; color:#90caf9; margin-top:2px; }
 
-  /* ── Vorschlag 2: 50/50 split ──────────────────────────── */
-  .p2 .main-row {
-    display:grid; grid-template-columns:1fr 1fr;
-    gap:0; margin-bottom:8px;
-    border-radius:8px; overflow:hidden;
+  /* ── Variante C: beide grau/neutral ────────────────── */
+  .vc .tiles { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .vc .tile {
+    display:flex; flex-direction:column;
+    background:#f4f6f8; border-radius:8px; padding:7px 10px;
   }
-  .p2 .temp-cell {
-    display:flex; flex-direction:column; justify-content:center;
-    padding: 6px 4px 6px 0;
-  }
-  .p2 .temp-label { font-size:.62rem; color:#aaa; text-transform:uppercase; letter-spacing:.04em; margin-bottom:2px; }
-  .p2 .target { font-size:2rem; font-weight:700; line-height:1; }
-  .p2 .valve-cell {
-    display:flex; flex-direction:column; justify-content:center; align-items:flex-end;
-    background: rgba(30,136,229,.07);
-    border-radius:8px;
-    padding: 6px 10px;
-  }
-  .p2 .vlabel { font-size:.62rem; color:#1565c0; text-transform:uppercase; letter-spacing:.04em; margin-bottom:2px; }
-  .p2 .vpct   { font-size:1.4rem; font-weight:700; color:#1565c0; line-height:1; }
-  .p2 .vavg   { font-size:.68rem; color:#90caf9; margin-top:2px; }
+  .vc .tile .lbl { font-size:.62rem; color:#aaa; text-transform:uppercase;
+                   letter-spacing:.04em; margin-bottom:3px; }
+  .vc .tile .val { font-size:1.4rem; font-weight:700; color:#222; line-height:1; }
+  .vc .tile .sub { font-size:.68rem; color:#bbb; margin-top:3px; }
+  .vc .tile.right { align-items:flex-end; }
 
-  /* ── Vorschlag 3: Ventil als Fortschrittsbalken ─────────── */
-  .p3 .main-row { display:flex; align-items:center; gap:0; margin-bottom:8px; }
-  .p3 .target   { font-size:2rem; font-weight:700; flex:1; line-height:1; }
-  .p3 .valve-block { display:flex; flex-direction:column; align-items:flex-end; gap:3px; min-width:70px; }
-  .p3 .vlabel { font-size:.62rem; color:#888; text-transform:uppercase; letter-spacing:.04em; }
-  .p3 .vpct   { font-size:1.1rem; font-weight:700; line-height:1; }
-  .p3 .vavg   { font-size:.68rem; color:#aaa; }
-  .p3 .bar-wrap { width:70px; height:5px; background:rgba(0,0,0,.08); border-radius:3px; }
-  .p3 .bar     { height:5px; background:#1e88e5; border-radius:3px; width:2%; }
-  .p3 .bar-avg { height:5px; background:rgba(30,136,229,.25); border-radius:3px; width:2%; margin-top:2px; }
+  /* ── Variante D: Icon + Wert, größer ───────────────── */
+  .vd .tiles { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .vd .tile {
+    display:flex; flex-direction:column; align-items:center;
+    background:#f4f6f8; border-radius:8px; padding:8px 10px; gap:2px;
+  }
+  .vd .tile .icon { font-size:1.1rem; }
+  .vd .tile .lbl { font-size:.6rem; color:#aaa; text-transform:uppercase; letter-spacing:.04em; }
+  .vd .tile .val { font-size:1.3rem; font-weight:700; color:#222; line-height:1.1; }
+  .vd .tile .sub { font-size:.65rem; color:#bbb; }
 </style>
 </head>
 <body>
 
-<h1>Clima Room Card – Ventil-Layout Anpassung</h1>
-<p class="subtitle">Ziel: weniger Freiraum zwischen Soll-Temp und Ventil, Ventil mehr Platz. Welcher Vorschlag gefällt?</p>
+<h1>Clima Room Card – Soll-Temp als Badge</h1>
+<p class="subtitle">Beide Werte gleichwertig als Kacheln. Welche Variante gefällt?</p>
 
 <div class="grid">
 
-  <!-- Aktuell -->
+  <!-- Variante A -->
   <div>
-    <div class="variant-title">Aktuell v1.0.7 (Referenz)</div>
-    <div class="card current">
+    <div class="variant-title">Variante A – Beide gleich blau</div>
+    <div class="card va">
       <div class="header">
-        <span class="room">Wohnzimmer <span class="ver">v1.0.7</span></span>
-        <span class="badge">OFF</span>
+        <span class="room">Wohnzimmer</span>
+        <span class="badge-off">OFF</span>
       </div>
       <div class="body">
-        <div class="main-row">
-          <span class="target">5.5°</span>
-          <div class="valve-block">
-            <span class="vlabel">Ventil</span>
-            <span class="vpct">0%</span>
-            <span class="vavg">Ø 24h: 2%</span>
+        <div class="tiles">
+          <div class="tile">
+            <span class="lbl">Soll-Temp</span>
+            <span class="val">5.5°</span>
+          </div>
+          <div class="tile">
+            <span class="lbl">Ventil</span>
+            <span class="val">0%</span>
+            <span class="sub">Ø 24h: 2%</span>
           </div>
         </div>
         <div class="sensors">
@@ -133,21 +132,24 @@
     </div>
   </div>
 
-  <!-- Vorschlag 1 -->
+  <!-- Variante B -->
   <div>
-    <div class="variant-title">Vorschlag 1 – Ventil als Kachel</div>
-    <div class="card p1">
+    <div class="variant-title">Variante B – Temp orange, Ventil blau</div>
+    <div class="card vb">
       <div class="header">
-        <span class="room">Wohnzimmer <span class="ver">v1.0.7</span></span>
-        <span class="badge">OFF</span>
+        <span class="room">Wohnzimmer</span>
+        <span class="badge-off">OFF</span>
       </div>
       <div class="body">
-        <div class="main-row">
-          <span class="target">5.5°</span>
-          <div class="valve-block">
-            <span class="vlabel">Ventil</span>
-            <span class="vpct">0%</span>
-            <span class="vavg">Ø 24h: 2%</span>
+        <div class="tiles">
+          <div class="tile-temp">
+            <span class="lbl">Soll-Temp</span>
+            <span class="val">5.5°</span>
+          </div>
+          <div class="tile-valve">
+            <span class="lbl">Ventil</span>
+            <span class="val">0%</span>
+            <span class="sub">Ø 24h: 2%</span>
           </div>
         </div>
         <div class="sensors">
@@ -158,24 +160,24 @@
     </div>
   </div>
 
-  <!-- Vorschlag 2 -->
+  <!-- Variante C -->
   <div>
-    <div class="variant-title">Vorschlag 2 – 50/50 Split</div>
-    <div class="card p2">
+    <div class="variant-title">Variante C – Neutral grau</div>
+    <div class="card vc">
       <div class="header">
-        <span class="room">Wohnzimmer <span class="ver">v1.0.7</span></span>
-        <span class="badge">OFF</span>
+        <span class="room">Wohnzimmer</span>
+        <span class="badge-off">OFF</span>
       </div>
       <div class="body">
-        <div class="main-row">
-          <div class="temp-cell">
-            <span class="temp-label">Soll-Temp</span>
-            <span class="target">5.5°</span>
+        <div class="tiles">
+          <div class="tile">
+            <span class="lbl">Soll-Temp</span>
+            <span class="val">5.5°</span>
           </div>
-          <div class="valve-cell">
-            <span class="vlabel">Ventil</span>
-            <span class="vpct">0%</span>
-            <span class="vavg">Ø 24h: 2%</span>
+          <div class="tile right">
+            <span class="lbl">Ventil</span>
+            <span class="val">0%</span>
+            <span class="sub">Ø 24h: 2%</span>
           </div>
         </div>
         <div class="sensors">
@@ -186,23 +188,26 @@
     </div>
   </div>
 
-  <!-- Vorschlag 3 -->
+  <!-- Variante D -->
   <div>
-    <div class="variant-title">Vorschlag 3 – Mit Balken</div>
-    <div class="card p3">
+    <div class="variant-title">Variante D – Mit Icons, zentriert</div>
+    <div class="card vd">
       <div class="header">
-        <span class="room">Wohnzimmer <span class="ver">v1.0.7</span></span>
-        <span class="badge">OFF</span>
+        <span class="room">Wohnzimmer</span>
+        <span class="badge-off">OFF</span>
       </div>
       <div class="body">
-        <div class="main-row">
-          <span class="target">5.5°</span>
-          <div class="valve-block">
-            <span class="vlabel">Ventil</span>
-            <span class="vpct">0%</span>
-            <div class="bar-wrap"><div class="bar"></div></div>
-            <span class="vavg">Ø 24h: 2%</span>
-            <div class="bar-wrap"><div class="bar-avg"></div></div>
+        <div class="tiles">
+          <div class="tile">
+            <span class="icon">🌡</span>
+            <span class="lbl">Soll-Temp</span>
+            <span class="val">5.5°</span>
+          </div>
+          <div class="tile">
+            <span class="icon">🔧</span>
+            <span class="lbl">Ventil</span>
+            <span class="val">0%</span>
+            <span class="sub">Ø 24h: 2%</span>
           </div>
         </div>
         <div class="sensors">
