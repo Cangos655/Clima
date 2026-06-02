@@ -5,7 +5,7 @@
  * type: custom:clima-room-card
  */
 
-const CLIMA_CARD_VERSION = "1.1.0";
+const CLIMA_CARD_VERSION = "1.1.1";
 console.info(`%c CLIMA-ROOM-CARD %c v${CLIMA_CARD_VERSION} `, "background:#03a9f4;color:#fff;font-weight:700", "background:#ccc;color:#000");
 
 class ClimaRoomCard extends HTMLElement {
@@ -118,7 +118,7 @@ class ClimaRoomCard extends HTMLElement {
           <div class="main-row">
             <div class="temp-cell" id="target">
               <span class="temp-label">Soll-Temp</span>
-              <span id="target-val">—°</span>
+              <span class="target" id="target-val">—°</span>
               <span class="hvac-badge off" id="hvac-badge">off</span>
             </div>
             ${cfg.valve_entity ? `
