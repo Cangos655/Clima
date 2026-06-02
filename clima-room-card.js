@@ -5,7 +5,7 @@
  * type: custom:clima-room-card
  */
 
-const CLIMA_CARD_VERSION = "1.1.3";
+const CLIMA_CARD_VERSION = "1.1.4";
 
 // Force Home Assistant to register <ha-entity-picker> by instantiating the
 // config element of a built-in card that uses it. Without this, the element
@@ -103,7 +103,7 @@ class ClimaRoomCard extends HTMLElement {
         .hvac-badge.off       { background:rgba(0,0,0,.05); color:#bbb; border-color:#e0e0e0; }
         .hvac-badge.heat      { background:rgba(255,152,0,.12); color:#e65100; border-color:rgba(255,152,0,.3); }
         .hvac-badge.cool      { background:rgba(33,150,243,.12); color:#1565c0; border-color:rgba(33,150,243,.3); }
-        .hvac-badge.heat_cool,.hvac-badge.auto { background:rgba(156,39,176,.12); color:#6a1b9a; border-color:rgba(156,39,176,.3); }
+        .hvac-badge.heat_cool,.hvac-badge.auto { background:rgba(255,152,0,.12); color:#e65100; border-color:rgba(255,152,0,.3); }
         .valve-cell { display:flex; flex-direction:column; align-items:flex-end; cursor:pointer;
                       background:rgba(30,136,229,.08); border-radius:8px; padding:6px 10px; }
         .valve-cell:active { background:rgba(30,136,229,.18); }
