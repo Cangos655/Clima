@@ -5,7 +5,7 @@
  * type: custom:clima-room-card
  */
 
-const CLIMA_CARD_VERSION = "1.1.4";
+const CLIMA_CARD_VERSION = "1.1.5";
 
 // Force Home Assistant to register <ha-entity-picker> by instantiating the
 // config element of a built-in card that uses it. Without this, the element
@@ -121,7 +121,7 @@ class ClimaRoomCard extends HTMLElement {
       </style>
       <ha-card>
         <div class="header">
-          <span class="room"><span id="room-name"></span><span class="ver">v${CLIMA_CARD_VERSION}</span></span>
+          <span class="room"><span id="room-name"></span></span>
         </div>
         <div class="body">
           <div class="main-row">
