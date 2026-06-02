@@ -5,6 +5,9 @@
  * type: custom:clima-room-card
  */
 
+const CLIMA_CARD_VERSION = "1.0.2";
+console.info(`%c CLIMA-ROOM-CARD %c v${CLIMA_CARD_VERSION} `, "background:#03a9f4;color:#fff;font-weight:700", "background:#ccc;color:#000");
+
 class ClimaRoomCard extends HTMLElement {
   constructor() {
     super();
@@ -154,6 +157,7 @@ class ClimaRoomCard extends HTMLElement {
               background:var(--secondary-background-color,rgba(0,0,0,.05));
               font-size:.82rem; font-weight:600; }
       .chip:hover { background:var(--primary-color,#03a9f4); color:#fff; }
+      .ver { font-size:.6rem; font-weight:400; opacity:.5; vertical-align:middle; }
     `;
   }
 
@@ -199,7 +203,7 @@ class ClimaRoomCard extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>${this._styles()}</style>
       <ha-card>
-        <div class="room">${roomName}</div>
+        <div class="room">${roomName} <span class="ver">v${CLIMA_CARD_VERSION}</span></div>
         <div class="thermo">
           <span class="target" id="target">${targetTemp}°</span>
           <button class="btn" id="btn-minus">−</button>
