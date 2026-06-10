@@ -5,7 +5,7 @@
  * type: custom:clima-room-card
  */
 
-const CLIMA_CARD_VERSION = "1.3.0";
+const CLIMA_CARD_VERSION = "1.4.0";
 
 // Force Home Assistant to register <ha-entity-picker> by instantiating the
 // config element of a built-in card that uses it. Without this, the element
@@ -436,57 +436,56 @@ class ClimaMultiroomCard extends HTMLElement {
           white-space:nowrap;
         }
 
-        .col-header {
-          display:grid;
-          grid-template-columns: 1fr 60px 68px 72px 60px 68px;
-          padding:4px 16px;
-          font-size:.62rem; font-weight:700; text-transform:uppercase;
-          letter-spacing:.06em; color:var(--secondary-text-color,#aaa);
-          border-bottom:1px solid var(--divider-color,rgba(0,0,0,.06));
-        }
-
-        .row {
-          display:grid;
-          grid-template-columns: 1fr 60px 68px 72px 60px 68px;
-          align-items:center;
-          padding:10px 16px;
-          border-bottom:1px solid var(--divider-color,rgba(0,0,0,.04));
+        /* Room block */
+        .room-block {
+          padding:10px 14px;
+          border-bottom:1px solid var(--divider-color,rgba(0,0,0,.05));
+          border-left:3px solid transparent;
           cursor:pointer;
           transition:background .15s;
-          border-left:3px solid transparent;
         }
-        .row:last-child { border-bottom:none; }
-        .row:active { background:var(--secondary-background-color,rgba(0,0,0,.04)); }
-        .row.heating { background:rgba(255,152,0,.04); border-left-color:#ff9800; }
-        .row.unavailable { opacity:.45; cursor:default; }
+        .room-block:last-child { border-bottom:none; }
+        .room-block:active { background:var(--secondary-background-color,rgba(0,0,0,.04)); }
+        .room-block.heating { background:rgba(255,152,0,.03); border-left-color:#ff9800; }
+        .room-block.unavailable { opacity:.45; cursor:default; }
 
-        .room-cell { display:flex; align-items:center; gap:8px; }
-        .room-icon { font-size:1.1rem; flex-shrink:0; }
-        .room-name { font-size:.9rem; font-weight:600; color:var(--primary-text-color); }
-
-        .cell { font-size:.82rem; color:var(--primary-text-color); text-align:right; }
-        .cell.dim { color:var(--secondary-text-color,#aaa); }
-        .cell .sub { font-size:.65rem; color:var(--secondary-text-color,#bbb); display:block; }
-        .cell.temp-ist { font-size:1rem; font-weight:700; }
-        .cell.humid { color:#1e88e5; font-weight:600; }
-
-        .soll { display:flex; align-items:center; justify-content:flex-end; gap:3px;
-                font-size:.82rem; color:var(--secondary-text-color,#888); }
-        .arrow { font-size:.7rem; opacity:.6; }
-
+        /* Top row: icon + name + badge */
+        .top-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+        .room-icon { font-size:1rem; flex-shrink:0; }
+        .room-name { font-size:.9rem; font-weight:700; flex:1; color:var(--primary-text-color); }
         .mode-badge {
-          font-size:.6rem; font-weight:700; text-transform:uppercase;
-          padding:2px 6px; border-radius:5px; justify-self:end;
-          background:rgba(0,0,0,.05); color:#aaa;
-          border:1px solid rgba(0,0,0,.08);
-          white-space:nowrap;
+          font-size:.58rem; font-weight:700; text-transform:uppercase;
+          padding:2px 7px; border-radius:5px;
+          background:rgba(0,0,0,.05); color:var(--secondary-text-color,#bbb);
+          border:1px solid rgba(0,0,0,.08); white-space:nowrap;
         }
-        .mode-badge.heat      { background:rgba(255,152,0,.12); color:#e65100; border-color:rgba(255,152,0,.3); }
-        .mode-badge.cool      { background:rgba(33,150,243,.12); color:#1565c0; border-color:rgba(33,150,243,.3); }
+        .mode-badge.heat,
         .mode-badge.heat_cool,
-        .mode-badge.auto      { background:rgba(255,152,0,.12); color:#e65100; border-color:rgba(255,152,0,.3); }
-        .mode-badge.unavail   { background:transparent; color:#ccc; border-color:#e8e8e8;
-                                font-style:italic; }
+        .mode-badge.auto  { background:rgba(255,152,0,.12); color:#e65100; border-color:rgba(255,152,0,.3); }
+        .mode-badge.cool  { background:rgba(33,150,243,.12); color:#1565c0; border-color:rgba(33,150,243,.3); }
+        .mode-badge.unavail { background:transparent; color:#ccc; border-color:#e0e0e0; font-style:italic; }
+
+        /* Stats row: 4 equal tiles */
+        .stats { display:flex; gap:6px; }
+        .stat {
+          flex:1; display:flex; flex-direction:column; align-items:center;
+          padding:7px 4px; border-radius:8px;
+          background:rgba(30,136,229,.07);
+        }
+        .stat.orange { background:rgba(255,152,0,.09); }
+        .stat.dim    { background:rgba(0,0,0,.04); }
+        .stat-lbl {
+          font-size:.56rem; text-transform:uppercase; letter-spacing:.04em;
+          font-weight:700; margin-bottom:3px;
+          color:#1565c0;
+        }
+        .stat.orange .stat-lbl { color:#e65100; }
+        .stat.dim    .stat-lbl { color:var(--secondary-text-color,#aaa); }
+        .stat-val { font-size:.95rem; font-weight:700; color:#1565c0; line-height:1.1; }
+        .stat.orange .stat-val { color:#e65100; }
+        .stat.dim    .stat-val { color:var(--primary-text-color); font-size:.85rem; }
+        .stat-sub { font-size:.58rem; color:#90caf9; margin-top:2px; }
+        .stat.orange .stat-sub { color:#ffcc80; }
       </style>
       <ha-card>
         <div class="header">
@@ -495,14 +494,6 @@ class ClimaMultiroomCard extends HTMLElement {
             <div class="subtitle" id="card-subtitle"></div>
           </div>
           <div class="avg-badge" id="avg-badge" style="display:none"></div>
-        </div>
-        <div class="col-header">
-          <span>Raum</span>
-          <span style="text-align:right">Feuchte</span>
-          <span style="text-align:right">Ist</span>
-          <span style="text-align:right">Ventil</span>
-          <span style="text-align:right">Soll</span>
-          <span style="text-align:right">Modus</span>
         </div>
         <div id="rows"></div>
       </ha-card>`;
@@ -540,7 +531,6 @@ class ClimaMultiroomCard extends HTMLElement {
 
       const humid = humS && humS.state !== "unavailable"
         ? `${parseFloat(humS.state).toFixed(0)}%` : "—";
-      const humClass = humid !== "—" ? "cell humid" : "cell dim";
 
       const valvePct = valveS && valveS.state !== "unavailable"
         ? `${parseFloat(valveS.state).toFixed(0)}%` : "—";
@@ -550,20 +540,39 @@ class ClimaMultiroomCard extends HTMLElement {
 
       const modeLabel = unavailable ? "Unavail." : hvacMode.replace(/_/g, " ");
       const modeClass = unavailable ? "mode-badge unavail" : `mode-badge ${hvacMode}`;
-      const rowClass  = unavailable ? "row unavailable" : isHeating ? "row heating" : "row";
+
+      const blockClass = unavailable ? "room-block unavailable"
+        : isHeating ? "room-block heating" : "room-block";
+
+      const tile = isHeating ? "stat orange" : "stat";
+      const dimTile = isHeating ? "stat orange" : "stat dim";
       const clickEntity = room.climate_entity || room.temp_entity || "";
 
       return `
-        <div class="${rowClass}" data-entity="${clickEntity}">
-          <div class="room-cell">
+        <div class="${blockClass}" data-entity="${clickEntity}">
+          <div class="top-row">
             ${room.icon ? `<span class="room-icon">${room.icon}</span>` : ""}
             <span class="room-name">${room.name || ""}</span>
+            <span class="${modeClass}">${modeLabel}</span>
           </div>
-          <span class="${humClass}">${humid}</span>
-          <span class="cell temp-ist">${istTemp}</span>
-          <span class="cell dim">${valvePct}<span class="sub">Ø —</span></span>
-          <span class="soll"><span class="arrow">→</span>${sollTemp}</span>
-          <span class="${modeClass}">${modeLabel}</span>
+          <div class="stats">
+            <div class="${tile}">
+              <span class="stat-lbl">Ist</span>
+              <span class="stat-val">${istTemp}</span>
+            </div>
+            <div class="${tile}">
+              <span class="stat-lbl">Feuchte</span>
+              <span class="stat-val">${humid}</span>
+            </div>
+            <div class="${dimTile}">
+              <span class="stat-lbl">Ventil</span>
+              <span class="stat-val">${valvePct}</span>
+            </div>
+            <div class="${dimTile}">
+              <span class="stat-lbl">Soll</span>
+              <span class="stat-val">${sollTemp}</span>
+            </div>
+          </div>
         </div>`;
     }).join("");
 
