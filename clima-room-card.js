@@ -5,7 +5,7 @@
  * type: custom:clima-room-card
  */
 
-const CLIMA_CARD_VERSION = "1.4.1";
+const CLIMA_CARD_VERSION = "1.4.2";
 
 // Force Home Assistant to register <ha-entity-picker> by instantiating the
 // config element of a built-in card that uses it. Without this, the element
@@ -383,6 +383,7 @@ class ClimaMultiroomCard extends HTMLElement {
     this._config = {};
     this._hass = null;
     this._built = false;
+    this._valveAvgs = {};  // entityId → avg value or null
 
     this.shadowRoot.addEventListener("click", (e) => {
       const row = e.target.closest("[data-entity]");
@@ -396,12 +397,41 @@ class ClimaMultiroomCard extends HTMLElement {
     }
     this._config = config;
     this._built = false;
+    this._valveAvgs = {};
     this._update();
   }
 
   set hass(hass) {
+    const wasNull = !this._hass;
     this._hass = hass;
     this._update();
+    if (wasNull) this._loadAllHistory();
+  }
+
+  async _loadAllHistory() {
+    const rooms = this._config.rooms || [];
+    const entities = [...new Set(rooms.map(r => r.valve_entity).filter(Boolean))];
+    if (!entities.length || !this._hass) return;
+
+    const end   = new Date();
+    const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
+    const url   = `/api/history/period/${start.toISOString()}` +
+      `?filter_entity_id=${entities.join(",")}` +
+      `&minimal_response&end_time=${end.toISOString()}`;
+    try {
+      const res  = await this._hass.fetchWithAuth(url);
+      if (!res.ok) return;
+      const data = await res.json();
+      data.forEach((series) => {
+        if (!series.length) return;
+        const entityId = series[0].entity_id;
+        const values   = series.map(s => parseFloat(s.state)).filter(v => !isNaN(v));
+        this._valveAvgs[entityId] = values.length
+          ? values.reduce((a, b) => a + b, 0) / values.length
+          : null;
+      });
+      this._update();
+    } catch (_) {}
   }
 
   getCardSize() {
@@ -567,6 +597,9 @@ class ClimaMultiroomCard extends HTMLElement {
             <div class="${dimTile}" ${room.valve_entity ? `data-entity="${room.valve_entity}"` : ""}>
               <span class="stat-lbl">Ventil</span>
               <span class="stat-val">${valvePct}</span>
+              ${room.valve_entity && this._valveAvgs[room.valve_entity] != null
+                ? `<span class="stat-sub">Ø ${this._valveAvgs[room.valve_entity].toFixed(0)}%</span>`
+                : ""}
             </div>
             <div class="${dimTile}" ${room.climate_entity ? `data-entity="${room.climate_entity}"` : ""}>
               <span class="stat-lbl">Soll</span>
