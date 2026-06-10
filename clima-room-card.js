@@ -5,7 +5,7 @@
  * type: custom:clima-room-card
  */
 
-const CLIMA_CARD_VERSION = "1.4.3";
+const CLIMA_CARD_VERSION = "1.4.4";
 
 // Force Home Assistant to register <ha-entity-picker> by instantiating the
 // config element of a built-in card that uses it. Without this, the element
@@ -558,7 +558,8 @@ class ClimaMultiroomCard extends HTMLElement {
 
       const istTemp = tempS && tempS.state !== "unavailable"
         ? `${parseFloat(tempS.state).toFixed(1)}°` : "—";
-      if (tempS && tempS.state !== "unavailable") currentTemps.push(parseFloat(tempS.state));
+
+      if (valveS && valveS.state !== "unavailable") currentTemps.push(parseFloat(valveS.state));
 
       const humid = humS && humS.state !== "unavailable"
         ? `${parseFloat(humS.state).toFixed(0)}%` : "—";
@@ -572,11 +573,10 @@ class ClimaMultiroomCard extends HTMLElement {
       const modeLabel = unavailable ? "Unavail." : hvacMode.replace(/_/g, " ");
       const modeClass = unavailable ? "mode-badge unavail" : `mode-badge ${hvacMode}`;
 
-      const blockClass = unavailable ? "room-block unavailable"
-        : isHeating ? "room-block heating" : "room-block";
+      const blockClass = unavailable ? "room-block unavailable" : "room-block";
 
-      const tile = isHeating ? "stat orange" : "stat";
-      const dimTile = isHeating ? "stat orange" : "stat dim";
+      const tile    = "stat";
+      const dimTile = "stat dim";
       const clickEntity = room.climate_entity || room.temp_entity || "";
 
       return `
@@ -615,11 +615,13 @@ class ClimaMultiroomCard extends HTMLElement {
     const heatingTxt = heatingCount > 0 ? ` · ${heatingCount} heizen` : "";
     sr.getElementById("card-subtitle").textContent = `${rooms.length} Räume${heatingTxt}`;
 
+    const badge = sr.getElementById("avg-badge");
     if (currentTemps.length > 0) {
       const avg = currentTemps.reduce((a, b) => a + b, 0) / currentTemps.length;
-      const badge = sr.getElementById("avg-badge");
-      badge.textContent = `Ø ${avg.toFixed(1)}°`;
+      badge.textContent = `Ø ${avg.toFixed(0)}%`;
       badge.style.display = "";
+    } else {
+      badge.style.display = "none";
     }
   }
 
