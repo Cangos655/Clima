@@ -5,7 +5,7 @@
  * type: custom:clima-room-card
  */
 
-const CLIMA_CARD_VERSION = "1.2.0";
+const CLIMA_CARD_VERSION = "1.3.0";
 
 // Force Home Assistant to register <ha-entity-picker> by instantiating the
 // config element of a built-in card that uses it. Without this, the element
@@ -595,6 +595,10 @@ class ClimaMultiroomCard extends HTMLElement {
       ],
     };
   }
+
+  static async getConfigElement() {
+    return document.createElement("clima-multiroom-card-editor");
+  }
 }
 
 customElements.define("clima-multiroom-card", ClimaMultiroomCard);
@@ -605,3 +609,164 @@ window.customCards.push({
   description: "Raumübersicht: Temperatur, Feuchte, Ventil, Soll-Temp und Modus aller Zimmer.",
   preview: false,
 });
+
+// ── Multiroom Card Editor ─────────────────────────────────────────────────────
+
+class ClimaMultiroomCardEditor extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._config = { title: "Heizung", rooms: [] };
+    this._hass = null;
+  }
+
+  async setConfig(config) {
+    this._config = JSON.parse(JSON.stringify(config));
+    if (!this._config.rooms) this._config.rooms = [];
+    await loadEntityPicker();
+    this._render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    this.shadowRoot.querySelectorAll("ha-entity-picker").forEach((el) => {
+      el.hass = hass;
+    });
+  }
+
+  _fire() {
+    this.dispatchEvent(new CustomEvent("config-changed", {
+      bubbles: true, composed: true,
+      detail: { config: this._config },
+    }));
+  }
+
+  _render() {
+    const c = this._config;
+    const rooms = c.rooms || [];
+
+    this.shadowRoot.innerHTML = `
+      <style>
+        .form { display:flex; flex-direction:column; gap:16px; padding:8px 0; }
+        .field { display:flex; flex-direction:column; gap:4px; }
+        label { font-size:.85rem; color:var(--secondary-text-color,#888); }
+        input { padding:6px 8px; border:1px solid var(--divider-color,#ccc);
+                border-radius:4px; background:var(--card-background-color,#fff);
+                color:var(--primary-text-color); font-size:.9rem; width:100%; box-sizing:border-box; }
+        input:focus { outline:none; border-color:var(--primary-color,#03a9f4); }
+        .room-card {
+          border:1px solid var(--divider-color,rgba(0,0,0,.12));
+          border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:10px;
+        }
+        .room-header { display:flex; align-items:center; justify-content:space-between; }
+        .room-title { font-size:.9rem; font-weight:700; color:var(--primary-text-color); }
+        .btn-remove {
+          background:none; border:none; cursor:pointer; color:var(--error-color,#f44336);
+          font-size:1.1rem; padding:2px 6px; border-radius:4px;
+        }
+        .btn-remove:hover { background:rgba(244,67,54,.08); }
+        .row2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+        .btn-add {
+          display:flex; align-items:center; justify-content:center; gap:6px;
+          padding:8px; border-radius:8px; border:2px dashed var(--divider-color,#ccc);
+          background:none; cursor:pointer; color:var(--primary-color,#03a9f4);
+          font-size:.9rem; font-weight:600; width:100%;
+        }
+        .btn-add:hover { background:rgba(3,169,244,.06); }
+        .section-label {
+          font-size:.75rem; font-weight:700; text-transform:uppercase;
+          letter-spacing:.06em; color:var(--secondary-text-color,#aaa);
+          margin-bottom:2px;
+        }
+      </style>
+      <div class="form">
+        <div class="field">
+          <label>Karten-Titel</label>
+          <input id="title" value="${c.title || "Heizung"}" placeholder="Heizung">
+        </div>
+        <div class="section-label">Räume</div>
+        ${rooms.map((room, i) => `
+          <div class="room-card" data-index="${i}">
+            <div class="room-header">
+              <span class="room-title">${room.name || `Raum ${i + 1}`}</span>
+              <button class="btn-remove" data-action="remove" data-index="${i}">✕</button>
+            </div>
+            <div class="row2">
+              <div class="field">
+                <label>Name</label>
+                <input class="room-field" data-index="${i}" data-key="name" value="${room.name || ""}" placeholder="Wohnzimmer">
+              </div>
+              <div class="field">
+                <label>Icon (Emoji)</label>
+                <input class="room-field" data-index="${i}" data-key="icon" value="${room.icon || ""}" placeholder="🛋️">
+              </div>
+            </div>
+            <div class="field">
+              <label>Thermostat Entity</label>
+              <ha-entity-picker data-index="${i}" data-key="climate_entity" allow-custom-entity></ha-entity-picker>
+            </div>
+            <div class="field">
+              <label>Ventil Entity</label>
+              <ha-entity-picker data-index="${i}" data-key="valve_entity" allow-custom-entity></ha-entity-picker>
+            </div>
+            <div class="field">
+              <label>Temperatur Sensor</label>
+              <ha-entity-picker data-index="${i}" data-key="temp_entity" allow-custom-entity></ha-entity-picker>
+            </div>
+            <div class="field">
+              <label>Feuchte Sensor</label>
+              <ha-entity-picker data-index="${i}" data-key="humidity_entity" allow-custom-entity></ha-entity-picker>
+            </div>
+          </div>`).join("")}
+        <button class="btn-add" id="btn-add">＋ Raum hinzufügen</button>
+      </div>`;
+
+    // Set hass + values for entity pickers
+    this.shadowRoot.querySelectorAll("ha-entity-picker").forEach((el) => {
+      const i   = parseInt(el.dataset.index);
+      const key = el.dataset.key;
+      if (this._hass) el.hass = this._hass;
+      el.value = rooms[i]?.[key] || "";
+      el.addEventListener("value-changed", (e) => {
+        this._config.rooms[i] = { ...this._config.rooms[i], [key]: e.detail.value };
+        this._fire();
+      });
+    });
+
+    // Text inputs
+    this.shadowRoot.getElementById("title").addEventListener("change", (e) => {
+      this._config.title = e.target.value;
+      this._fire();
+    });
+
+    this.shadowRoot.querySelectorAll("input.room-field").forEach((el) => {
+      el.addEventListener("change", (e) => {
+        const i   = parseInt(e.target.dataset.index);
+        const key = e.target.dataset.key;
+        this._config.rooms[i] = { ...this._config.rooms[i], [key]: e.target.value };
+        this._fire();
+        // Re-render to update room title in header
+        if (key === "name") this._render();
+      });
+    });
+
+    // Remove room
+    this.shadowRoot.querySelectorAll("[data-action='remove']").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const i = parseInt(btn.dataset.index);
+        this._config.rooms.splice(i, 1);
+        this._fire();
+        this._render();
+      });
+    });
+
+    // Add room
+    this.shadowRoot.getElementById("btn-add").addEventListener("click", () => {
+      this._config.rooms.push({ name: "", icon: "" });
+      this._fire();
+      this._render();
+    });
+  }
+}
+
+customElements.define("clima-multiroom-card-editor", ClimaMultiroomCardEditor);
