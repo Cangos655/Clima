@@ -5,7 +5,7 @@
  * type: custom:clima-room-card
  */
 
-const CLIMA_CARD_VERSION = "1.1.5";
+const CLIMA_CARD_VERSION = "1.2.0";
 
 // Force Home Assistant to register <ha-entity-picker> by instantiating the
 // config element of a built-in card that uses it. Without this, the element
