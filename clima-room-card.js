@@ -5,7 +5,7 @@
  * type: custom:clima-room-card
  */
 
-const CLIMA_CARD_VERSION = "1.4.2";
+const CLIMA_CARD_VERSION = "1.4.3";
 
 // Force Home Assistant to register <ha-entity-picker> by instantiating the
 // config element of a built-in card that uses it. Without this, the element
@@ -483,6 +483,7 @@ class ClimaMultiroomCard extends HTMLElement {
         .top-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
         .room-icon { font-size:1rem; flex-shrink:0; }
         .room-name { font-size:.9rem; font-weight:700; flex:1; color:var(--primary-text-color); }
+        .valve-avg-inline { font-size:.72rem; color:var(--secondary-text-color,#aaa); white-space:nowrap; }
         .mode-badge {
           font-size:.58rem; font-weight:700; text-transform:uppercase;
           padding:2px 7px; border-radius:5px;
@@ -583,6 +584,9 @@ class ClimaMultiroomCard extends HTMLElement {
           <div class="top-row">
             ${room.icon ? `<span class="room-icon">${room.icon}</span>` : ""}
             <span class="room-name">${room.name || ""}</span>
+            ${room.valve_entity && this._valveAvgs[room.valve_entity] != null
+              ? `<span class="valve-avg-inline">Ø ${this._valveAvgs[room.valve_entity].toFixed(0)}%</span>`
+              : ""}
             <span class="${modeClass}">${modeLabel}</span>
           </div>
           <div class="stats">
@@ -597,9 +601,6 @@ class ClimaMultiroomCard extends HTMLElement {
             <div class="${dimTile}" ${room.valve_entity ? `data-entity="${room.valve_entity}"` : ""}>
               <span class="stat-lbl">Ventil</span>
               <span class="stat-val">${valvePct}</span>
-              ${room.valve_entity && this._valveAvgs[room.valve_entity] != null
-                ? `<span class="stat-sub">Ø ${this._valveAvgs[room.valve_entity].toFixed(0)}%</span>`
-                : ""}
             </div>
             <div class="${dimTile}" ${room.climate_entity ? `data-entity="${room.climate_entity}"` : ""}>
               <span class="stat-lbl">Soll</span>
