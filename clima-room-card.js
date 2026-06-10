@@ -5,7 +5,7 @@
  * type: custom:clima-room-card
  */
 
-const CLIMA_CARD_VERSION = "1.4.0";
+const CLIMA_CARD_VERSION = "1.4.1";
 
 // Force Home Assistant to register <ha-entity-picker> by instantiating the
 // config element of a built-in card that uses it. Without this, the element
@@ -556,19 +556,19 @@ class ClimaMultiroomCard extends HTMLElement {
             <span class="${modeClass}">${modeLabel}</span>
           </div>
           <div class="stats">
-            <div class="${tile}">
+            <div class="${tile}" ${room.temp_entity ? `data-entity="${room.temp_entity}"` : ""}>
               <span class="stat-lbl">Ist</span>
               <span class="stat-val">${istTemp}</span>
             </div>
-            <div class="${tile}">
+            <div class="${tile}" ${room.humidity_entity ? `data-entity="${room.humidity_entity}"` : ""}>
               <span class="stat-lbl">Feuchte</span>
               <span class="stat-val">${humid}</span>
             </div>
-            <div class="${dimTile}">
+            <div class="${dimTile}" ${room.valve_entity ? `data-entity="${room.valve_entity}"` : ""}>
               <span class="stat-lbl">Ventil</span>
               <span class="stat-val">${valvePct}</span>
             </div>
-            <div class="${dimTile}">
+            <div class="${dimTile}" ${room.climate_entity ? `data-entity="${room.climate_entity}"` : ""}>
               <span class="stat-lbl">Soll</span>
               <span class="stat-val">${sollTemp}</span>
             </div>
