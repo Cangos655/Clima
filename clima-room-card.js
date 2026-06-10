@@ -5,7 +5,7 @@
  * type: custom:clima-room-card
  */
 
-const CLIMA_CARD_VERSION = "1.4.4";
+const CLIMA_CARD_VERSION = "1.4.5";
 
 // Force Home Assistant to register <ha-entity-picker> by instantiating the
 // config element of a built-in card that uses it. Without this, the element
@@ -508,12 +508,12 @@ class ClimaMultiroomCard extends HTMLElement {
         .stat-lbl {
           font-size:.56rem; text-transform:uppercase; letter-spacing:.04em;
           font-weight:700; margin-bottom:3px;
-          color:#1565c0;
+          color:var(--primary-color, #1e88e5);
         }
-        .stat.orange .stat-lbl { color:#e65100; }
+        .stat.orange .stat-lbl { color:#ffa726; }
         .stat.dim    .stat-lbl { color:var(--secondary-text-color,#aaa); }
-        .stat-val { font-size:.95rem; font-weight:700; color:#1565c0; line-height:1.1; }
-        .stat.orange .stat-val { color:#e65100; }
+        .stat-val { font-size:.95rem; font-weight:700; color:var(--primary-color, #1e88e5); line-height:1.1; }
+        .stat.orange .stat-val { color:#ffa726; }
         .stat.dim    .stat-val { color:var(--primary-text-color); font-size:.85rem; }
         .stat-sub { font-size:.58rem; color:#90caf9; margin-top:2px; }
         .stat.orange .stat-sub { color:#ffcc80; }
