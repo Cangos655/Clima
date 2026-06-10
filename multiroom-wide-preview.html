@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multiroom Wide – Varianten</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,"Roboto",sans-serif; background:#f0f2f5; padding:32px 24px; display:flex; flex-direction:column; gap:40px; }
+  .label { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#888; margin-bottom:10px; }
+
+  /* ── Variante A: Breitere Spalten, größere Werte, mehr Luft ── */
+  .card-a { background:#fff; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,.12); overflow:hidden; }
+  .card-a .header { display:flex; align-items:center; gap:12px; padding:16px 20px 12px; border-bottom:1px solid rgba(0,0,0,.07); }
+  .card-a .title { font-size:1.2rem; font-weight:700; color:#1a1a1a; flex:1; }
+  .card-a .subtitle { font-size:.78rem; color:#888; margin-top:2px; }
+  .card-a .avg { font-size:.95rem; font-weight:700; padding:5px 14px; border-radius:20px; background:rgba(30,136,229,.1); color:#1565c0; }
+  .card-a .col-hdr {
+    display:grid; grid-template-columns: 200px 1fr 1fr 1fr 1fr 1fr;
+    padding:5px 20px;
+    font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#aaa;
+    border-bottom:1px solid rgba(0,0,0,.05);
+  }
+  .card-a .row {
+    display:grid; grid-template-columns: 200px 1fr 1fr 1fr 1fr 1fr;
+    align-items:center; padding:14px 20px;
+    border-bottom:1px solid rgba(0,0,0,.04);
+    border-left:3px solid transparent;
+  }
+  .card-a .row:last-child { border-bottom:none; }
+  .card-a .row.heat { background:rgba(255,152,0,.04); border-left-color:#ff9800; }
+  .card-a .room-cell { display:flex; align-items:center; gap:10px; }
+  .card-a .icon { font-size:1.2rem; }
+  .card-a .name { font-size:.95rem; font-weight:600; }
+  .card-a .cell { text-align:right; }
+  .card-a .val { font-size:1rem; font-weight:700; color:#1a1a1a; }
+  .card-a .sub { font-size:.65rem; color:#bbb; margin-top:1px; }
+  .card-a .humid { color:#1e88e5; }
+  .card-a .soll { font-size:.85rem; color:#888; text-align:right; }
+  .card-a .badge { font-size:.6rem; font-weight:700; text-transform:uppercase; padding:3px 7px; border-radius:5px; border:1px solid rgba(0,0,0,.08); background:rgba(0,0,0,.04); color:#aaa; white-space:nowrap; justify-self:end; }
+  .card-a .badge.heat { background:rgba(255,152,0,.12); color:#e65100; border-color:rgba(255,152,0,.3); }
+  .card-a .badge.off { background:rgba(0,0,0,.04); color:#ccc; }
+
+  /* ── Variante B: Kachel-Grid pro Zeile ── */
+  .card-b { background:#fff; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,.12); overflow:hidden; }
+  .card-b .header { display:flex; align-items:center; gap:12px; padding:16px 20px 12px; border-bottom:1px solid rgba(0,0,0,.07); }
+  .card-b .title { font-size:1.2rem; font-weight:700; color:#1a1a1a; flex:1; }
+  .card-b .subtitle { font-size:.78rem; color:#888; margin-top:2px; }
+  .card-b .avg { font-size:.95rem; font-weight:700; padding:5px 14px; border-radius:20px; background:rgba(30,136,229,.1); color:#1565c0; }
+  .card-b .room-row { display:flex; align-items:center; padding:12px 20px; gap:16px; border-bottom:1px solid rgba(0,0,0,.04); border-left:3px solid transparent; }
+  .card-b .room-row:last-child { border-bottom:none; }
+  .card-b .room-row.heat { background:rgba(255,152,0,.03); border-left-color:#ff9800; }
+  .card-b .room-name-block { display:flex; align-items:center; gap:10px; min-width:180px; }
+  .card-b .icon { font-size:1.2rem; }
+  .card-b .name { font-size:.95rem; font-weight:600; }
+  .card-b .chips { display:flex; gap:8px; flex:1; }
+  .card-b .chip { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+                  background:rgba(30,136,229,.06); border-radius:10px; padding:8px 10px; min-width:70px; }
+  .card-b .chip.orange { background:rgba(255,152,0,.08); }
+  .card-b .chip-lbl { font-size:.58rem; text-transform:uppercase; letter-spacing:.05em; color:#1565c0; font-weight:700; margin-bottom:3px; }
+  .card-b .chip.orange .chip-lbl { color:#e65100; }
+  .card-b .chip-val { font-size:1.05rem; font-weight:700; color:#1565c0; }
+  .card-b .chip.orange .chip-val { color:#e65100; }
+  .card-b .chip-sub { font-size:.62rem; color:#90caf9; margin-top:1px; }
+  .card-b .chip.dim { background:rgba(0,0,0,.04); }
+  .card-b .chip.dim .chip-lbl { color:#aaa; }
+  .card-b .chip.dim .chip-val { color:#666; font-size:.95rem; }
+  .card-b .badge { font-size:.6rem; font-weight:700; text-transform:uppercase; padding:3px 8px; border-radius:6px; border:1px solid rgba(0,0,0,.08); background:rgba(0,0,0,.04); color:#bbb; align-self:center; white-space:nowrap; }
+  .card-b .badge.heat { background:rgba(255,152,0,.12); color:#e65100; border-color:rgba(255,152,0,.3); }
+
+  /* ── Variante C: Kompakte Tabelle + farbige Temp-Spalte ── */
+  .card-c { background:#fff; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,.12); overflow:hidden; }
+  .card-c .header { display:flex; align-items:center; gap:12px; padding:16px 20px 12px; border-bottom:1px solid rgba(0,0,0,.07); }
+  .card-c .title { font-size:1.2rem; font-weight:700; color:#1a1a1a; flex:1; }
+  .card-c .subtitle { font-size:.78rem; color:#888; margin-top:2px; }
+  .card-c .avg { font-size:.95rem; font-weight:700; padding:5px 14px; border-radius:20px; background:rgba(30,136,229,.1); color:#1565c0; }
+  .card-c .col-hdr {
+    display:grid; grid-template-columns: 1fr 90px 110px 90px 90px 80px;
+    padding:5px 20px;
+    font-size:.62rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#aaa;
+    border-bottom:1px solid rgba(0,0,0,.05);
+  }
+  .card-c .row {
+    display:grid; grid-template-columns: 1fr 90px 110px 90px 90px 80px;
+    align-items:center; padding:12px 20px;
+    border-bottom:1px solid rgba(0,0,0,.04);
+    border-left:3px solid transparent;
+  }
+  .card-c .row:last-child { border-bottom:none; }
+  .card-c .row.heat { background:rgba(255,152,0,.04); border-left-color:#ff9800; }
+  .card-c .room-cell { display:flex; align-items:center; gap:10px; }
+  .card-c .icon { font-size:1.2rem; }
+  .card-c .name { font-size:.95rem; font-weight:600; }
+  .card-c .cell { text-align:right; }
+  .card-c .ist { font-size:1.15rem; font-weight:700; color:#1a1a1a; text-align:right; }
+  .card-c .humid { font-size:.9rem; font-weight:600; color:#1e88e5; text-align:right; }
+  .card-c .valve-block { text-align:right; }
+  .card-c .vpct { font-size:.9rem; font-weight:600; color:#555; }
+  .card-c .vavg { font-size:.62rem; color:#bbb; display:block; }
+  .card-c .soll-block { text-align:right; }
+  .card-c .soll-val { font-size:.9rem; color:#888; }
+  .card-c .soll-arr { font-size:.7rem; opacity:.5; margin-right:2px; }
+  .card-c .badge { font-size:.6rem; font-weight:700; text-transform:uppercase; padding:3px 7px; border-radius:5px; border:1px solid rgba(0,0,0,.08); background:rgba(0,0,0,.04); color:#bbb; justify-self:end; white-space:nowrap; }
+  .card-c .badge.heat { background:rgba(255,152,0,.12); color:#e65100; border-color:rgba(255,152,0,.3); }
+  /* Temp color coding */
+  .card-c .ist.cold { color:#1e88e5; }
+  .card-c .ist.warm { color:#e65100; }
+</style>
+</head>
+<body>
+
+<!-- ── Variante A ── -->
+<div>
+  <div class="label">Variante A — Breitere Spalten, gleichmäßig verteilt</div>
+  <div class="card-a">
+    <div class="header">
+      <div>
+        <div class="title">Heizung</div>
+        <div class="subtitle">3 Räume</div>
+      </div>
+      <div class="avg">Ø 20.1°</div>
+    </div>
+    <div class="col-hdr">
+      <span>Raum</span>
+      <span style="text-align:right">Feuchte</span>
+      <span style="text-align:right">Ist</span>
+      <span style="text-align:right">Ventil</span>
+      <span style="text-align:right">Soll</span>
+      <span style="text-align:right">Modus</span>
+    </div>
+    <div class="row">
+      <div class="room-cell"><span class="icon">🛋️</span><span class="name">Wohnzimmer</span></div>
+      <div class="cell humid"><span class="val">46%</span></div>
+      <div class="cell"><span class="val">21.5°</span></div>
+      <div class="cell"><span class="val">0%</span><div class="sub">Ø 24h: 2%</div></div>
+      <div class="soll">→ 5.5°</div>
+      <span class="badge off">OFF</span>
+    </div>
+    <div class="row heat">
+      <div class="room-cell"><span class="icon">💼</span><span class="name">Büro</span></div>
+      <div class="cell humid"><span class="val">45%</span></div>
+      <div class="cell"><span class="val">19.8°</span></div>
+      <div class="cell"><span class="val">65%</span><div class="sub">Ø 24h: 40%</div></div>
+      <div class="soll">→ 21.0°</div>
+      <span class="badge heat">HEAT</span>
+    </div>
+    <div class="row">
+      <div class="room-cell"><span class="icon">🛏️</span><span class="name">Schlafzimmer</span></div>
+      <div class="cell humid"><span class="val">42%</span></div>
+      <div class="cell"><span class="val">18.9°</span></div>
+      <div class="cell"><span class="val">0%</span><div class="sub">Ø 24h: 1%</div></div>
+      <div class="soll">→ 5.0°</div>
+      <span class="badge off">OFF</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Variante B ── -->
+<div>
+  <div class="label">Variante B — Kacheln pro Zeile (visueller, mehr Kontrast)</div>
+  <div class="card-b">
+    <div class="header">
+      <div>
+        <div class="title">Heizung</div>
+        <div class="subtitle">3 Räume · 1 heizt</div>
+      </div>
+      <div class="avg">Ø 20.1°</div>
+    </div>
+    <div class="room-row">
+      <div class="room-name-block"><span class="icon">🛋️</span><span class="name">Wohnzimmer</span></div>
+      <div class="chips">
+        <div class="chip"><span class="chip-lbl">Ist</span><span class="chip-val">21.5°</span></div>
+        <div class="chip"><span class="chip-lbl">Feuchte</span><span class="chip-val">46%</span></div>
+        <div class="chip dim"><span class="chip-lbl">Ventil</span><span class="chip-val">0%</span><span class="chip-sub">Ø 2%</span></div>
+        <div class="chip dim"><span class="chip-lbl">Soll</span><span class="chip-val">5.5°</span></div>
+      </div>
+      <span class="badge">OFF</span>
+    </div>
+    <div class="room-row heat">
+      <div class="room-name-block"><span class="icon">💼</span><span class="name">Büro</span></div>
+      <div class="chips">
+        <div class="chip"><span class="chip-lbl">Ist</span><span class="chip-val">19.8°</span></div>
+        <div class="chip"><span class="chip-lbl">Feuchte</span><span class="chip-val">45%</span></div>
+        <div class="chip orange"><span class="chip-lbl">Ventil</span><span class="chip-val">65%</span><span class="chip-sub">Ø 40%</span></div>
+        <div class="chip orange"><span class="chip-lbl">Soll</span><span class="chip-val">21.0°</span></div>
+      </div>
+      <span class="badge heat">HEAT</span>
+    </div>
+    <div class="room-row">
+      <div class="room-name-block"><span class="icon">🛏️</span><span class="name">Schlafzimmer</span></div>
+      <div class="chips">
+        <div class="chip"><span class="chip-lbl">Ist</span><span class="chip-val">18.9°</span></div>
+        <div class="chip"><span class="chip-lbl">Feuchte</span><span class="chip-val">42%</span></div>
+        <div class="chip dim"><span class="chip-lbl">Ventil</span><span class="chip-val">0%</span><span class="chip-sub">Ø 1%</span></div>
+        <div class="chip dim"><span class="chip-lbl">Soll</span><span class="chip-val">5.0°</span></div>
+      </div>
+      <span class="badge">OFF</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Variante C ── -->
+<div>
+  <div class="label">Variante C — Tabelle mit größerer Ist-Temp + Farbkodierung</div>
+  <div class="card-c">
+    <div class="header">
+      <div>
+        <div class="title">Heizung</div>
+        <div class="subtitle">3 Räume · 1 heizt</div>
+      </div>
+      <div class="avg">Ø 20.1°</div>
+    </div>
+    <div class="col-hdr">
+      <span>Raum</span>
+      <span style="text-align:right">Feuchte</span>
+      <span style="text-align:right">Ist-Temp</span>
+      <span style="text-align:right">Ventil</span>
+      <span style="text-align:right">Soll</span>
+      <span style="text-align:right">Modus</span>
+    </div>
+    <div class="row">
+      <div class="room-cell"><span class="icon">🛋️</span><span class="name">Wohnzimmer</span></div>
+      <div class="humid">46%</div>
+      <div class="ist warm">21.5°</div>
+      <div class="valve-block"><span class="vpct">0%</span><span class="vavg">Ø 24h: 2%</span></div>
+      <div class="soll-block"><span class="soll-arr">→</span><span class="soll-val">5.5°</span></div>
+      <span class="badge">OFF</span>
+    </div>
+    <div class="row heat">
+      <div class="room-cell"><span class="icon">💼</span><span class="name">Büro</span></div>
+      <div class="humid">45%</div>
+      <div class="ist cold">19.8°</div>
+      <div class="valve-block"><span class="vpct">65%</span><span class="vavg">Ø 24h: 40%</span></div>
+      <div class="soll-block"><span class="soll-arr">→</span><span class="soll-val">21.0°</span></div>
+      <span class="badge heat">HEAT</span>
+    </div>
+    <div class="row">
+      <div class="room-cell"><span class="icon">🛏️</span><span class="name">Schlafzimmer</span></div>
+      <div class="humid">42%</div>
+      <div class="ist cold">18.9°</div>
+      <div class="valve-block"><span class="vpct">0%</span><span class="vavg">Ø 24h: 1%</span></div>
+      <div class="soll-block"><span class="soll-arr">→</span><span class="soll-val">5.0°</span></div>
+      <span class="badge">OFF</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
