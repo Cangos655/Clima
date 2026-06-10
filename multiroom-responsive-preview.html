@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multiroom Responsive – Varianten</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,"Roboto",sans-serif; background:#f0f2f5; padding:32px 24px; display:flex; flex-direction:column; gap:48px; }
+  .label { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#888; margin-bottom:10px; }
+  .preview-row { display:flex; gap:32px; flex-wrap:wrap; align-items:flex-start; }
+  .narrow { width:248px; }
+  .wide   { width:560px; }
+  .size-tag { font-size:.65rem; color:#aaa; margin-bottom:6px; text-align:center; }
+
+  /* ════════════════════════════════════════════════════════
+     VARIANTE A — Kompakt-Tabelle (keine Spaltenköpfe bei <300px)
+     ════════════════════════════════════════════════════════ */
+  .a { background:#fff; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,.12); overflow:hidden; }
+  .a .hdr { display:flex; align-items:center; gap:8px; padding:12px 14px 8px; border-bottom:1px solid rgba(0,0,0,.07); }
+  .a .title { font-size:1rem; font-weight:700; flex:1; color:#1a1a1a; }
+  .a .sub { font-size:.72rem; color:#888; margin-top:1px; }
+  .a .avg { font-size:.82rem; font-weight:700; padding:3px 10px; border-radius:20px; background:rgba(30,136,229,.1); color:#1565c0; white-space:nowrap; }
+
+  /* narrow: 3-column layout: room | temp+humid | valve+mode */
+  .a .row-n {
+    display:grid; grid-template-columns: 1fr auto auto;
+    align-items:center; gap:8px;
+    padding:9px 14px;
+    border-bottom:1px solid rgba(0,0,0,.04);
+    border-left:3px solid transparent;
+  }
+  .a .row-n.heat { background:rgba(255,152,0,.04); border-left-color:#ff9800; }
+  .a .row-n:last-child { border-bottom:none; }
+  .a .room-cell { display:flex; align-items:center; gap:7px; min-width:0; }
+  .a .icon { font-size:1rem; flex-shrink:0; }
+  .a .name { font-size:.85rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .a .temp-hum { display:flex; flex-direction:column; align-items:flex-end; }
+  .a .ist { font-size:.95rem; font-weight:700; color:#1a1a1a; }
+  .a .hum { font-size:.72rem; color:#1e88e5; font-weight:600; }
+  .a .valve-mode { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
+  .a .vpct { font-size:.8rem; color:#666; font-weight:600; }
+  .a .badge-s { font-size:.55rem; font-weight:700; text-transform:uppercase; padding:2px 5px; border-radius:4px; border:1px solid rgba(0,0,0,.08); background:rgba(0,0,0,.04); color:#bbb; white-space:nowrap; }
+  .a .badge-s.heat { background:rgba(255,152,0,.12); color:#e65100; border-color:rgba(255,152,0,.3); }
+
+  /* wide: full 6-column table */
+  .a .col-hdr {
+    display:grid; grid-template-columns: 1fr 70px 80px 80px 70px 72px;
+    padding:4px 16px;
+    font-size:.6rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#aaa;
+    border-bottom:1px solid rgba(0,0,0,.05);
+  }
+  .a .row-w {
+    display:grid; grid-template-columns: 1fr 70px 80px 80px 70px 72px;
+    align-items:center; padding:11px 16px;
+    border-bottom:1px solid rgba(0,0,0,.04);
+    border-left:3px solid transparent;
+  }
+  .a .row-w.heat { background:rgba(255,152,0,.04); border-left-color:#ff9800; }
+  .a .row-w:last-child { border-bottom:none; }
+  .a .cell { text-align:right; font-size:.85rem; }
+  .a .cell.ist-w { font-size:1rem; font-weight:700; }
+  .a .cell.hum-w { color:#1e88e5; font-weight:600; }
+  .a .cell-valve { text-align:right; }
+  .a .cell-valve .vp { font-size:.85rem; font-weight:600; color:#555; }
+  .a .cell-valve .vs { font-size:.62rem; color:#bbb; display:block; }
+  .a .soll-w { text-align:right; font-size:.85rem; color:#888; }
+  .a .badge-w { font-size:.6rem; font-weight:700; text-transform:uppercase; padding:2px 6px; border-radius:5px; border:1px solid rgba(0,0,0,.08); background:rgba(0,0,0,.04); color:#bbb; justify-self:end; white-space:nowrap; }
+  .a .badge-w.heat { background:rgba(255,152,0,.12); color:#e65100; border-color:rgba(255,152,0,.3); }
+
+  /* ════════════════════════════════════════════════════════
+     VARIANTE B — 2-Zeilen pro Raum: Name+Modus oben, Werte unten
+     ════════════════════════════════════════════════════════ */
+  .b { background:#fff; border-radius:12px; box-shadow:0 1px 6px rgba(0,0,0,.12); overflow:hidden; }
+  .b .hdr { display:flex; align-items:center; gap:8px; padding:12px 14px 8px; border-bottom:1px solid rgba(0,0,0,.07); }
+  .b .title { font-size:1rem; font-weight:700; flex:1; color:#1a1a1a; }
+  .b .sub { font-size:.72rem; color:#888; margin-top:1px; }
+  .b .avg { font-size:.82rem; font-weight:700; padding:3px 10px; border-radius:20px; background:rgba(30,136,229,.1); color:#1565c0; white-space:nowrap; }
+  .b .room-block { padding:10px 14px; border-bottom:1px solid rgba(0,0,0,.05); border-left:3px solid transparent; }
+  .b .room-block.heat { background:rgba(255,152,0,.03); border-left-color:#ff9800; }
+  .b .room-block:last-child { border-bottom:none; }
+  .b .top-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .b .icon { font-size:1rem; }
+  .b .name { font-size:.9rem; font-weight:700; flex:1; }
+  .b .badge { font-size:.58rem; font-weight:700; text-transform:uppercase; padding:2px 7px; border-radius:5px; border:1px solid rgba(0,0,0,.08); background:rgba(0,0,0,.04); color:#bbb; white-space:nowrap; }
+  .b .badge.heat { background:rgba(255,152,0,.12); color:#e65100; border-color:rgba(255,152,0,.3); }
+  .b .stats { display:flex; gap:0; }
+  .b .stat { flex:1; display:flex; flex-direction:column; align-items:center; padding:6px 4px;
+             background:rgba(30,136,229,.06); border-radius:8px; margin-right:6px; }
+  .b .stat:last-child { margin-right:0; }
+  .b .stat.orange { background:rgba(255,152,0,.08); }
+  .b .stat-lbl { font-size:.56rem; text-transform:uppercase; letter-spacing:.04em; color:#1565c0; font-weight:700; margin-bottom:2px; }
+  .b .stat.orange .stat-lbl { color:#e65100; }
+  .b .stat-val { font-size:.95rem; font-weight:700; color:#1565c0; line-height:1.1; }
+  .b .stat.orange .stat-val { color:#e65100; }
+  .b .stat-sub { font-size:.58rem; color:#90caf9; margin-top:1px; }
+  .b .stat.dim { background:rgba(0,0,0,.04); }
+  .b .stat.dim .stat-lbl { color:#aaa; }
+  .b .stat.dim .stat-val { color:#666; font-size:.85rem; }
+
+</style>
+</head>
+<body>
+
+<!-- ════ VARIANTE A ════ -->
+<div>
+  <div class="label">Variante A — Responsive Tabelle (schmal: 3 Spalten / breit: 6 Spalten)</div>
+  <div class="preview-row">
+
+    <div class="narrow">
+      <div class="size-tag">248 px</div>
+      <div class="a">
+        <div class="hdr">
+          <div><div class="title">Heizung</div><div class="sub">3 Räume</div></div>
+          <div class="avg">Ø 20.1°</div>
+        </div>
+        <div class="row-n">
+          <div class="room-cell"><span class="icon">🛋️</span><span class="name">Wohnzimmer</span></div>
+          <div class="temp-hum"><span class="ist">21.5°</span><span class="hum">46%</span></div>
+          <div class="valve-mode"><span class="vpct">0%</span><span class="badge-s">OFF</span></div>
+        </div>
+        <div class="row-n heat">
+          <div class="room-cell"><span class="icon">💼</span><span class="name">Büro</span></div>
+          <div class="temp-hum"><span class="ist">19.8°</span><span class="hum">45%</span></div>
+          <div class="valve-mode"><span class="vpct">65%</span><span class="badge-s heat">HEAT</span></div>
+        </div>
+        <div class="row-n">
+          <div class="room-cell"><span class="icon">🛏️</span><span class="name">Schlafzimmer</span></div>
+          <div class="temp-hum"><span class="ist">18.9°</span><span class="hum">42%</span></div>
+          <div class="valve-mode"><span class="vpct">0%</span><span class="badge-s">OFF</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wide">
+      <div class="size-tag">560 px</div>
+      <div class="a">
+        <div class="hdr">
+          <div><div class="title">Heizung</div><div class="sub">3 Räume · 1 heizt</div></div>
+          <div class="avg">Ø 20.1°</div>
+        </div>
+        <div class="col-hdr">
+          <span>Raum</span>
+          <span style="text-align:right">Feuchte</span>
+          <span style="text-align:right">Ist</span>
+          <span style="text-align:right">Ventil</span>
+          <span style="text-align:right">Soll</span>
+          <span style="text-align:right">Modus</span>
+        </div>
+        <div class="row-w">
+          <div class="room-cell"><span class="icon">🛋️</span><span class="name">Wohnzimmer</span></div>
+          <div class="cell hum-w">46%</div>
+          <div class="cell ist-w">21.5°</div>
+          <div class="cell-valve"><span class="vp">0%</span><span class="vs">Ø 24h: 2%</span></div>
+          <div class="soll-w">→ 5.5°</div>
+          <span class="badge-w">OFF</span>
+        </div>
+        <div class="row-w heat">
+          <div class="room-cell"><span class="icon">💼</span><span class="name">Büro</span></div>
+          <div class="cell hum-w">45%</div>
+          <div class="cell ist-w">19.8°</div>
+          <div class="cell-valve"><span class="vp">65%</span><span class="vs">Ø 24h: 40%</span></div>
+          <div class="soll-w">→ 21.0°</div>
+          <span class="badge-w heat">HEAT</span>
+        </div>
+        <div class="row-w">
+          <div class="room-cell"><span class="icon">🛏️</span><span class="name">Schlafzimmer</span></div>
+          <div class="cell hum-w">42%</div>
+          <div class="cell ist-w">18.9°</div>
+          <div class="cell-valve"><span class="vp">0%</span><span class="vs">Ø 24h: 1%</span></div>
+          <div class="soll-w">→ 5.0°</div>
+          <span class="badge-w">OFF</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════ VARIANTE B ════ -->
+<div>
+  <div class="label">Variante B — 2-Zeilen pro Raum: Name + Modus oben, Kacheln unten</div>
+  <div class="preview-row">
+
+    <div class="narrow">
+      <div class="size-tag">248 px</div>
+      <div class="b">
+        <div class="hdr">
+          <div><div class="title">Heizung</div><div class="sub">3 Räume</div></div>
+          <div class="avg">Ø 20.1°</div>
+        </div>
+        <div class="room-block">
+          <div class="top-row"><span class="icon">🛋️</span><span class="name">Wohnzimmer</span><span class="badge">OFF</span></div>
+          <div class="stats">
+            <div class="stat"><span class="stat-lbl">Ist</span><span class="stat-val">21.5°</span></div>
+            <div class="stat"><span class="stat-lbl">Feuchte</span><span class="stat-val">46%</span></div>
+            <div class="stat dim"><span class="stat-lbl">Ventil</span><span class="stat-val">0%</span></div>
+            <div class="stat dim"><span class="stat-lbl">Soll</span><span class="stat-val">5.5°</span></div>
+          </div>
+        </div>
+        <div class="room-block heat">
+          <div class="top-row"><span class="icon">💼</span><span class="name">Büro</span><span class="badge heat">HEAT</span></div>
+          <div class="stats">
+            <div class="stat"><span class="stat-lbl">Ist</span><span class="stat-val">19.8°</span></div>
+            <div class="stat"><span class="stat-lbl">Feuchte</span><span class="stat-val">45%</span></div>
+            <div class="stat orange"><span class="stat-lbl">Ventil</span><span class="stat-val">65%</span><span class="stat-sub">Ø 40%</span></div>
+            <div class="stat orange"><span class="stat-lbl">Soll</span><span class="stat-val">21°</span></div>
+          </div>
+        </div>
+        <div class="room-block">
+          <div class="top-row"><span class="icon">🛏️</span><span class="name">Schlafzimmer</span><span class="badge">OFF</span></div>
+          <div class="stats">
+            <div class="stat"><span class="stat-lbl">Ist</span><span class="stat-val">18.9°</span></div>
+            <div class="stat"><span class="stat-lbl">Feuchte</span><span class="stat-val">42%</span></div>
+            <div class="stat dim"><span class="stat-lbl">Ventil</span><span class="stat-val">0%</span></div>
+            <div class="stat dim"><span class="stat-lbl">Soll</span><span class="stat-val">5.0°</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wide">
+      <div class="size-tag">560 px</div>
+      <div class="b">
+        <div class="hdr">
+          <div><div class="title">Heizung</div><div class="sub">3 Räume · 1 heizt</div></div>
+          <div class="avg">Ø 20.1°</div>
+        </div>
+        <div class="room-block">
+          <div class="top-row"><span class="icon">🛋️</span><span class="name">Wohnzimmer</span><span class="badge">OFF</span></div>
+          <div class="stats">
+            <div class="stat"><span class="stat-lbl">Ist</span><span class="stat-val">21.5°</span></div>
+            <div class="stat"><span class="stat-lbl">Feuchte</span><span class="stat-val">46%</span></div>
+            <div class="stat dim"><span class="stat-lbl">Ventil</span><span class="stat-val">0%</span><span class="stat-sub">Ø 2%</span></div>
+            <div class="stat dim"><span class="stat-lbl">Soll</span><span class="stat-val">5.5°</span></div>
+          </div>
+        </div>
+        <div class="room-block heat">
+          <div class="top-row"><span class="icon">💼</span><span class="name">Büro</span><span class="badge heat">HEAT</span></div>
+          <div class="stats">
+            <div class="stat"><span class="stat-lbl">Ist</span><span class="stat-val">19.8°</span></div>
+            <div class="stat"><span class="stat-lbl">Feuchte</span><span class="stat-val">45%</span></div>
+            <div class="stat orange"><span class="stat-lbl">Ventil</span><span class="stat-val">65%</span><span class="stat-sub">Ø 40%</span></div>
+            <div class="stat orange"><span class="stat-lbl">Soll</span><span class="stat-val">21.0°</span></div>
+          </div>
+        </div>
+        <div class="room-block">
+          <div class="top-row"><span class="icon">🛏️</span><span class="name">Schlafzimmer</span><span class="badge">OFF</span></div>
+          <div class="stats">
+            <div class="stat"><span class="stat-lbl">Ist</span><span class="stat-val">18.9°</span></div>
+            <div class="stat"><span class="stat-lbl">Feuchte</span><span class="stat-val">42%</span></div>
+            <div class="stat dim"><span class="stat-lbl">Ventil</span><span class="stat-val">0%</span><span class="stat-sub">Ø 1%</span></div>
+            <div class="stat dim"><span class="stat-lbl">Soll</span><span class="stat-val">5.0°</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
